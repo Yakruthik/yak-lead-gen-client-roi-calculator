@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { CalculatorOutputs, CalculatorInputs } from '@/hooks/useCalculator';
+import { CalculatorOutputs, CalculatorInputs, ClientType } from '@/hooks/useCalculator';
 import { Currency, formatCurrency } from '@/lib/currency';
 
 interface Section3Props {
   inputs: CalculatorInputs;
   outputs: CalculatorOutputs;
   currency: Currency;
+  selectedClientType: ClientType;
   onReset: () => void;
 }
 
@@ -14,6 +15,15 @@ interface ScriptProps {
   icon: string;
   content: string;
 }
+
+// Client type configuration with LTV on CAC ranges
+const clientTypeConfig: Record<string, { label: string; ltvOnCacRange: string; ltvOnCacMax: number; cacRange: string }> = {
+  saas: { label: 'B2B SaaS', ltvOnCacRange: '30-40%', ltvOnCacMax: 0.40, cacRange: '25-35%' },
+  agency: { label: 'B2B Service/Agency', ltvOnCacRange: '20-30%', ltvOnCacMax: 0.30, cacRange: '20-30%' },
+  industrial: { label: 'Industrial/Manufacturing', ltvOnCacRange: '15-25%', ltvOnCacMax: 0.25, cacRange: '15-25%' },
+  consulting: { label: 'Consulting/Prof Services', ltvOnCacRange: '25-35%', ltvOnCacMax: 0.35, cacRange: '20-30%' },
+  ecommerce: { label: 'E-commerce/DTC', ltvOnCacRange: '10-20%', ltvOnCacMax: 0.20, cacRange: '15-25%' },
+};
 
 function ScriptItem({ title, icon, content }: ScriptProps) {
   const [copied, setCopied] = useState(false);
@@ -46,9 +56,14 @@ function ScriptItem({ title, icon, content }: ScriptProps) {
   );
 }
 
-export function Section3({ inputs, outputs, currency, onReset }: Section3Props) {
+export function Section3({ inputs, outputs, currency, selectedClientType, onReset }: Section3Props) {
   const fmt = (v: number) => formatCurrency(v, currency);
   const highlight = (text: string) => `<strong class="text-primary">${text}</strong>`;
+  const dynamicHighlight = (text: string) => `<strong class="text-destructive">${text}</strong>`;
+
+  // Get client type config (default to saas if none selected)
+  const typeConfig = clientTypeConfig[selectedClientType || 'saas'];
+  const ltvBudgetMax = outputs.ltv * typeConfig.ltvOnCacMax;
 
   // Script 1: ROI Breakeven (Best for CFOs & Finance-Focused Buyers)
   const script1 = `Your average deal is ${highlight(fmt(outputs.calculatedAacv))}. My annual cost is ${highlight(fmt(outputs.annualCost))}. So mathematically, you break even after closing just ${highlight(outputs.breakeven + ' deals')} with the leads I generate. Every deal after deal number ${outputs.breakeven} is pure profit for you. Given that you're targeting ${highlight(inputs.newClientTarget + ' new clients')} annually, this investment pays for itself by Month 3 at your current conversion rate.`;
@@ -65,21 +80,25 @@ export function Section3({ inputs, outputs, currency, onReset }: Section3Props) 
   // Script 4: Pipeline Pressure (Best for Founders/Sales Reps in Trenches)
   const script4 = `Here's the reality: You need ${highlight(inputs.newClientTarget + ' new clients')} at ${highlight(fmt(outputs.calculatedAacv))} each. Your pipeline is ${highlight(outputs.monthlyGap.toFixed(1) + ' SQL meetings per month')} short of what you need to hit that target. That's the problem. Your close rate is locked in. Your deal size is locked in. What's NOT locked in is your pipeline. For ${highlight(fmt(outputs.annualCost))} annually, I solve that one variable. You hit your target. That's the deal.`;
 
-  // Script 5: The LTV Math Angle (Best for Data-Driven Buyers)
-  const ltvBudget = outputs.ltv * 0.35;
+  // Script 5: The LTV Math Angle (Best for Data-Driven Buyers) - Dynamic based on client type
   const script5 = `Here's the math that matters for scaling: your LTV is ${highlight(fmt(outputs.ltv))}. That's your AACV of ${highlight(fmt(outputs.calculatedAacv))} multiplied by your average client lifespan of <span class="inline-block bg-secondary/20 px-2 py-0.5 rounded border border-secondary text-secondary font-semibold">${inputs.customerLifetime} years</span>. That's your revenue ceiling per client.
 
-Against that, you can afford to spend up to ${highlight('30-40%')} of LTV on CAC and still be healthy long-term. That gives you a budget of roughly ${highlight(fmt(ltvBudget))} per client to acquire them.
+Against that, you can afford to spend up to ${dynamicHighlight(typeConfig.ltvOnCacRange)} of LTV on CAC and still be healthy long-term. That gives you a budget of roughly ${dynamicHighlight(fmt(ltvBudgetMax))} per client to acquire them.
 
-My investment of ${highlight(fmt(outputs.costPerSQL))} per qualified meeting is well within that ceiling. And since you need ${highlight(inputs.sqlsPerWin.toString())} meetings to close an average deal, my total CAC per client through my service is efficient. This is how you scale without burning out your S&M team.`;
+My investment of ${highlight(fmt(outputs.costPerSQL))} per qualified meeting is well within that ceiling. And since you need to speak with ${highlight(inputs.sqlsPerWin.toString())} qualified leads to find just one buyer, my total CAC per client through my service is efficient. This is how you scale without burning out your S&M team.`;
 
-  // Script 6: CAC Efficiency (Best for CFOs/Finance Buyers)
-  const totalBudgetAnnual = outputs.costPerSQL * outputs.totalMeetingsNeeded;
-  const script6 = `Let me frame this as a CAC optimization play. Right now, your CAC is ${highlight(outputs.cacPercent.toFixed(1) + '%')} of AACV. ${highlight('Industry standard for high-ticket B2B SaaS is 25-35% of AACV.')} You're either right in the band or stretching it.
+  // Script 6: CAC Efficiency (Best for CFOs/Finance Buyers) - Dynamic based on client type
+  const cacMaxPercent = parseFloat(typeConfig.cacRange.split('-')[1]);
+  const isHealthy = outputs.cacPercent <= cacMaxPercent;
+  const benefitStatement = isHealthy 
+    ? "You have the margin to scale aggressively with precision."
+    : "You need to stop the bleeding by shifting to higher-quality, lower-waste channels.";
+  
+  const script6 = `Let me frame this as a CAC optimization play. Right now, your CAC is ${highlight(outputs.cacPercent.toFixed(1) + '%')} of AACV. ${dynamicHighlight('Industry standard for ' + typeConfig.label + ' is ' + typeConfig.cacRange + ' of AACV.')} You're at ${highlight(outputs.cacPercent.toFixed(1) + '%')}. Since you're ${isHealthy ? 'below' : 'above'} that ${cacMaxPercent}% ceiling, ${benefitStatement}
 
-The math here is simple: instead of spending money on broad campaigns that generate low-quality volume, you're investing ${highlight(fmt(totalBudgetAnnual))} annually in qualified leads that match your ICP. We reduce your CAC waste and improve your close rate because you're not chasing tire-kickers.
+The math here is simple: instead of spending money on broad campaigns that generate low-quality volume, you're investing ${highlight(fmt(outputs.annualCost))} annually in qualified leads that match your ICP. We reduce your CAC waste and improve your close rate because you're not chasing tire-kickers.
 
-Your LTV is ${highlight(fmt(outputs.ltv))}, so your LTV:CAC ratio ceiling is huge. We're essentially saying: let's shift budget from broad-based CAC into precision CAC. Better spend, better returns, predictable pipeline.`;
+Your LTV is ${highlight(fmt(outputs.ltv))}—that means you have significant runway to invest in customer acquisition while staying profitable. We're essentially saying: let's shift budget from broad-based CAC into precision CAC. Better spend, better returns, predictable pipeline.`;
 
   return (
     <section className="mb-10">

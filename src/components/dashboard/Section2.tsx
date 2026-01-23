@@ -71,7 +71,7 @@ export function Section2({ inputs, outputs, updateInput, currency, selectedClien
         <MetricCard
           label="🔴 ANNUAL AVG CONTRACT VALUE (AACV)"
           value={formatCurrency(outputs.calculatedAacv, currency)}
-          description="Avg annual revenue from ONE client (ACV ÷ Contract Years)"
+          description="Avg annual revenue from ONE client (TCV ÷ Contract Years)"
           highlight="red"
           showCompulsory
           currency={currency}
@@ -115,7 +115,7 @@ export function Section2({ inputs, outputs, updateInput, currency, selectedClien
         <MetricCard
           label="🔴 PIPELINE VALUE PER MEETING"
           value={formatCurrency(outputs.valuePerMeeting, currency)}
-          description="Each new SQL meeting is worth this much in potential AACV (AACV ÷ Meetings-to-Win)"
+          description="Each new SQL meeting is worth this much in potential AACV (AACV ÷ SQLs-Meetings-to-Win)"
           highlight="red"
           showCompulsory
           currency={currency}
@@ -130,7 +130,7 @@ export function Section2({ inputs, outputs, updateInput, currency, selectedClien
         <MetricCard
           label="TOTAL ANNUAL MEETINGS NEEDED"
           value={Math.round(outputs.totalMeetingsNeeded) + ' meetings/yr'}
-          description="To hit growth target + replace churn (Target Deals × Meetings-to-Win + Churn Deals × Meetings-to-Win)"
+          description="To hit growth target + replace churn (Target Deals × SQLs-Meetings-to-Win + Churn Deals × SQLs-Meetings-to-Win)"
         />
         <MetricCard
           label="🔴 MONTHLY GAP IN SQLS"

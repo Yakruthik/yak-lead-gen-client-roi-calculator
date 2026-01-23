@@ -108,11 +108,11 @@ export function Section1({ inputs, updateInput, currency, grrRequired }: Section
           required
         />
         <InputField
-          label="SQLs-to-Win Ratio"
-          question="What is your close rate? For every 10 qualified leads you speak to, how many actually become paying clients?"
+          label="SQLs-Meetings-to-Win Ratio"
+          question="In average, how many qualified first meetings (SQLs) do you need to take to close ONE deal? (e.g. If you close 1 in 5, enter 5)"
           value={inputs.sqlsPerWin}
           onChange={(v) => updateInput('sqlsPerWin', v)}
-          placeholder="e.g., 2 out of 10"
+          placeholder="e.g., 5"
           required
         />
       </div>

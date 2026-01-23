@@ -44,6 +44,7 @@ const Index = () => {
           inputs={inputs}
           outputs={outputs}
           currency={currency}
+          selectedClientType={selectedClientType}
           onReset={resetAll}
         />
 

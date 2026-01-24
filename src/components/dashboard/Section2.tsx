@@ -2,7 +2,7 @@ import { CalculatorInputs, CalculatorOutputs, ClientType } from '@/hooks/useCalc
 import { InputField } from './InputField';
 import { MetricCard } from './MetricCard';
 import { ClientTypeCard } from './ClientTypeCard';
-import { Currency, formatCurrency } from '@/lib/currency';
+import { Currency, formatCurrency, rates } from '@/lib/currency';
 
 interface Section2Props {
   inputs: CalculatorInputs;
@@ -20,6 +20,24 @@ const clientTypes: { type: ClientType; title: string; range: string; reason: str
   { type: 'consulting', title: 'Consulting / Prof Services', range: '6% – 12% of AACV', reason: 'Project-based revenue, need consistent pipeline' },
   { type: 'ecommerce', title: 'E-commerce / DTC', range: '2% – 6% of AACV', reason: 'Thin margins (10-25%), high volume, micro-CAC model' },
 ];
+
+// CAC benchmarks by client type (from reference table)
+const cacBenchmarks: Record<string, string> = {
+  saas: 'Total Benchmark: 25-35% (includes salaries, ads, tools, etc.)',
+  agency: 'Total Benchmark: 15-25% (includes salaries, ads, tools, etc.)',
+  industrial: 'Total Benchmark: 5-15% (includes salaries, ads, tools, etc.)',
+  consulting: 'Total Benchmark: 15-25% (includes salaries, ads, tools, etc.)',
+  ecommerce: 'Total Benchmark: 10-20% (includes salaries, ads, tools, etc.)',
+};
+
+// LTV:CAC ratio hints by client type
+const ltvCacHints: Record<string, string> = {
+  saas: 'Healthy = 3:1 or higher. Below 2:1 = need to reduce CAC or improve retention',
+  agency: 'Healthy = 4:1 or higher. Below 3:1 = need to reduce CAC or improve retention',
+  industrial: 'Healthy = 4:1 or higher. Below 3:1 = need to reduce CAC or improve retention',
+  consulting: 'Healthy = 3:1 to 5:1. Below 2.5:1 = need to reduce CAC or improve retention',
+  ecommerce: 'Healthy = 5:1 or higher. Below 4:1 = need to reduce CAC or improve retention',
+};
 
 function getClientTypeLabel(type: ClientType): string {
   const labels: Record<string, string> = {
@@ -102,7 +120,7 @@ export function Section2({ inputs, outputs, updateInput, currency, selectedClien
         <MetricCard
           label="CAC AS % OF AACV"
           value={outputs.cacPercent.toFixed(1) + '%'}
-          description="Industry benchmark: 20-35% is healthy. Above 40% = stretched thin"
+          description={cacBenchmarks[selectedClientType || 'saas']}
         />
       </div>
 
@@ -110,7 +128,7 @@ export function Section2({ inputs, outputs, updateInput, currency, selectedClien
         <MetricCard
           label="LTV:CAC RATIO"
           value={outputs.ltvCacRatio + ':1'}
-          description="Healthy = 3:1 or higher. Below 2:1 = need to reduce CAC or improve retention"
+          description={ltvCacHints[selectedClientType || 'saas']}
         />
         <MetricCard
           label="🔴 PIPELINE VALUE PER MEETING"
@@ -213,7 +231,7 @@ export function Section2({ inputs, outputs, updateInput, currency, selectedClien
         <MetricCard
           label="CLIENT ANNUAL COST (MY SERVICE)"
           value={formatCurrency(outputs.annualCost, currency)}
-          description="Retainer × 12 + (PPA × Monthly SQLs × 12)"
+          description={`(Retainer × 12) + (PPA × Monthly Gap in SQLs × 12)`}
           highlight="blue"
           showCompulsory
           currency={currency}
@@ -223,7 +241,7 @@ export function Section2({ inputs, outputs, updateInput, currency, selectedClien
         <MetricCard
           label="BREAKEVEN (NUMBER OF CLIENTS)"
           value={outputs.breakeven + ' clients'}
-          description="Deals needed to pay for my service. Everything after = profit"
+          description={`Close just ${outputs.breakeven} deals to cover my entire annual fee. The rest is pure profit.`}
           highlight="blue"
           showCompulsory
         />
@@ -231,9 +249,17 @@ export function Section2({ inputs, outputs, updateInput, currency, selectedClien
 
       <div className="grid md:grid-cols-2 gap-5 mb-6">
         <MetricCard
-          label="MY SERVICE AS % OF AACV"
-          value={outputs.servicePercent + '%'}
-          description="How much of acceptable CAC budget I capture (good: 5-15%)"
+          label="MY EFFECTIVE TAKE RATE"
+          value={outputs.effectiveTakeRate.toFixed(1) + '%'}
+          description="Of all the new revenue I generate, what % do I keep?"
+          highlight={outputs.effectiveTakeRate < 15 ? 'green' : outputs.effectiveTakeRate <= 25 ? 'yellow' : 'red'}
+          tooltipContent={
+            outputs.effectiveTakeRate < 15 
+              ? 'Healthy (Sustainable)' 
+              : outputs.effectiveTakeRate <= 25 
+                ? 'Aggressive (High Value)' 
+                : 'Risk (Client Churn Likely)'
+          }
         />
         <MetricCard
           label="MY COST PER SQL MEETING"
@@ -245,7 +271,7 @@ export function Section2({ inputs, outputs, updateInput, currency, selectedClien
         />
       </div>
 
-      <div className="grid md:grid-cols-2 gap-5">
+      <div className="grid md:grid-cols-2 gap-5 mb-6">
         <MetricCard
           label="NET REVENUE (AFTER MY COST)"
           value={formatCurrency(outputs.netRevenue, currency)}
@@ -259,11 +285,24 @@ export function Section2({ inputs, outputs, updateInput, currency, selectedClien
         <MetricCard
           label="ROI RATIO"
           value={outputs.roi + 'x'}
-          description="For every ₹1 spent on my service, you make this much revenue"
+          description={`For every ${rates[currency].symbol}1 spent on my service, you make this much revenue`}
           highlight="green"
           showCompulsory
         />
       </div>
+
+      {/* Budget Health Check */}
+      {outputs.budgetHealthStatus !== 'none' && (
+        <div className={`p-4 rounded-lg border ${
+          outputs.budgetHealthStatus === 'warning' 
+            ? 'bg-destructive/10 border-destructive/20 text-destructive' 
+            : 'bg-success/10 border-success/20 text-success'
+        }`}>
+          {outputs.budgetHealthStatus === 'warning' 
+            ? '⚠️ Warning: Cost exceeds 50% of reported budget.'
+            : '✅ Budget Safe: Fits within reported spend.'}
+        </div>
+      )}
     </section>
   );
 }

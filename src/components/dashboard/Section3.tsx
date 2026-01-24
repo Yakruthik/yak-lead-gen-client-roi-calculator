@@ -16,13 +16,13 @@ interface ScriptProps {
   content: string;
 }
 
-// Client type configuration with LTV on CAC ranges
+// Client type configuration with LTV on CAC ranges - matching client type selection ranges
 const clientTypeConfig: Record<string, { label: string; ltvOnCacRange: string; ltvOnCacMax: number; cacRange: string }> = {
-  saas: { label: 'B2B SaaS', ltvOnCacRange: '30-40%', ltvOnCacMax: 0.40, cacRange: '25-35%' },
-  agency: { label: 'B2B Service/Agency', ltvOnCacRange: '20-30%', ltvOnCacMax: 0.30, cacRange: '20-30%' },
-  industrial: { label: 'Industrial/Manufacturing', ltvOnCacRange: '15-25%', ltvOnCacMax: 0.25, cacRange: '15-25%' },
-  consulting: { label: 'Consulting/Prof Services', ltvOnCacRange: '25-35%', ltvOnCacMax: 0.35, cacRange: '20-30%' },
-  ecommerce: { label: 'E-commerce/DTC', ltvOnCacRange: '10-20%', ltvOnCacMax: 0.20, cacRange: '15-25%' },
+  saas: { label: 'B2B SaaS', ltvOnCacRange: '30-40%', ltvOnCacMax: 0.40, cacRange: '7.5-17.5%' },
+  agency: { label: 'B2B Service/Agency', ltvOnCacRange: '20-30%', ltvOnCacMax: 0.30, cacRange: '5-10%' },
+  industrial: { label: 'Industrial/Manufacturing', ltvOnCacRange: '15-25%', ltvOnCacMax: 0.25, cacRange: '3-8%' },
+  consulting: { label: 'Consulting/Prof Services', ltvOnCacRange: '25-35%', ltvOnCacMax: 0.35, cacRange: '6-12%' },
+  ecommerce: { label: 'E-commerce/DTC', ltvOnCacRange: '10-20%', ltvOnCacMax: 0.20, cacRange: '2-6%' },
 };
 
 function ScriptItem({ title, icon, content }: ScriptProps) {

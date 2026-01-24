@@ -4,6 +4,21 @@ import { MetricCard } from './MetricCard';
 import { ClientTypeCard } from './ClientTypeCard';
 import { Currency, formatCurrency, rates } from '@/lib/currency';
 
+// Industry ranges for explanation text
+const INDUSTRY_RANGES = {
+  saas: { low: 0.075, high: 0.175 },
+  agency: { low: 0.05, high: 0.10 },
+  industrial: { low: 0.03, high: 0.08 },
+  consulting: { low: 0.06, high: 0.12 },
+  ecommerce: { low: 0.02, high: 0.06 }
+};
+
+// Floor values in local currency (based on $1000 USD)
+const FLOOR_VALUES: Record<Currency, number> = {
+  USD: 1000,
+  INR: 92000,
+  AED: 3673
+};
 interface Section2Props {
   inputs: CalculatorInputs;
   outputs: CalculatorOutputs;
@@ -180,28 +195,97 @@ export function Section2({ inputs, outputs, updateInput, currency, selectedClien
         />
       </div>
 
-      {/* Pricing Recommendations */}
-      <h3 className="text-success font-semibold text-lg mt-6 mb-4">💵 My Service Pricing Recommendation</h3>
-      <div className="bg-gradient-to-br from-warning/10 to-warning/5 border border-warning/20 border-l-4 border-l-warning rounded-lg p-4 mb-4">
-        <div className="font-bold text-warning mb-1.5">📌 Suggested Monthly Retainer Range</div>
-        <div className="text-muted-foreground">
-          <strong className="text-foreground">
-            Range: {formatCurrency(outputs.retainerLow, currency)} - {formatCurrency(outputs.retainerHigh, currency)} per month
-          </strong>
-          <br />
-          <small>(Based on your {getClientTypeLabel(selectedClientType)} industry profile, 65% of recommended budget)</small>
+      {/* Pricing Recommendations - 3 Tier System */}
+      <h3 className="text-success font-semibold text-lg mt-6 mb-4">🤑 My Service Pricing Recommendation</h3>
+      
+      {/* Disqualification Warning */}
+      {outputs.pricingTiers.disqualified && (
+        <div className="bg-destructive/10 border border-destructive/20 border-l-4 border-l-destructive rounded-lg p-4 mb-4">
+          <div className="font-bold text-destructive mb-1">⚠️ Disqualification Warning</div>
+          <div className="text-sm text-destructive/80">
+            {outputs.pricingTiers.disqualificationReason}
+          </div>
+        </div>
+      )}
+
+      {/* 3-Tier Pricing Cards */}
+      <div className="grid md:grid-cols-3 gap-4 mb-6">
+        {/* Lite Tier */}
+        <div className="bg-gradient-to-br from-muted/50 to-muted/30 border border-border rounded-lg p-4 relative">
+          <div className="absolute top-2 right-2 bg-muted text-muted-foreground text-xs px-2 py-0.5 rounded">LITE</div>
+          <div className="font-bold text-primary mb-2">{outputs.pricingTiers.lite.name}</div>
+          <div className="space-y-2">
+            <div>
+              <span className="text-xs text-muted-foreground">Monthly Retainer</span>
+              <div className="text-lg font-semibold text-foreground">{formatCurrency(outputs.pricingTiers.lite.retainer, currency)}</div>
+            </div>
+            <div>
+              <span className="text-xs text-muted-foreground">Per-Meeting Fee (PPA)</span>
+              <div className="text-lg font-semibold text-foreground">{formatCurrency(outputs.pricingTiers.lite.ppa, currency)}</div>
+            </div>
+          </div>
+          <div className="text-xs text-muted-foreground mt-3 border-t border-border pt-2">
+            {outputs.pricingTiers.lite.description}
+          </div>
+          <div className="text-xs text-muted-foreground mt-1 italic">
+            (30% Retainer / 70% PPA)
+          </div>
+        </div>
+
+        {/* Standard Tier - Highlighted */}
+        <div className="bg-gradient-to-br from-success/20 to-success/10 border-2 border-success rounded-lg p-4 relative ring-2 ring-success/30">
+          <div className="absolute top-2 right-2 bg-success text-success-foreground text-xs px-2 py-0.5 rounded font-semibold">RECOMMENDED</div>
+          <div className="font-bold text-success mb-2">{outputs.pricingTiers.standard.name}</div>
+          <div className="space-y-2">
+            <div>
+              <span className="text-xs text-muted-foreground">Monthly Retainer</span>
+              <div className="text-lg font-semibold text-foreground">{formatCurrency(outputs.pricingTiers.standard.retainer, currency)}</div>
+            </div>
+            <div>
+              <span className="text-xs text-muted-foreground">Per-Meeting Fee (PPA)</span>
+              <div className="text-lg font-semibold text-foreground">{formatCurrency(outputs.pricingTiers.standard.ppa, currency)}</div>
+            </div>
+          </div>
+          <div className="text-xs text-muted-foreground mt-3 border-t border-success/30 pt-2">
+            {outputs.pricingTiers.standard.description}
+          </div>
+          <div className="text-xs text-muted-foreground mt-1 italic">
+            (50% Retainer / 50% PPA)
+          </div>
+        </div>
+
+        {/* Aggressive Tier */}
+        <div className="bg-gradient-to-br from-warning/20 to-warning/10 border border-warning/30 rounded-lg p-4 relative">
+          <div className="absolute top-2 right-2 bg-warning text-warning-foreground text-xs px-2 py-0.5 rounded">ENTERPRISE</div>
+          <div className="font-bold text-warning mb-2">{outputs.pricingTiers.aggressive.name}</div>
+          <div className="space-y-2">
+            <div>
+              <span className="text-xs text-muted-foreground">Monthly Retainer</span>
+              <div className="text-lg font-semibold text-foreground">{formatCurrency(outputs.pricingTiers.aggressive.retainer, currency)}</div>
+            </div>
+            <div>
+              <span className="text-xs text-muted-foreground">Per-Meeting Fee (PPA)</span>
+              <div className="text-lg font-semibold text-foreground">{formatCurrency(outputs.pricingTiers.aggressive.ppa, currency)}</div>
+            </div>
+          </div>
+          <div className="text-xs text-muted-foreground mt-3 border-t border-warning/30 pt-2">
+            {outputs.pricingTiers.aggressive.description}
+          </div>
+          <div className="text-xs text-muted-foreground mt-1 italic">
+            (70% Retainer / 30% PPA)
+          </div>
         </div>
       </div>
 
-      <div className="bg-gradient-to-br from-warning/10 to-warning/5 border border-warning/20 border-l-4 border-l-warning rounded-lg p-4 mb-6">
-        <div className="font-bold text-warning mb-1.5">📌 Suggested Per-Meeting Fee (PPA) Range</div>
-        <div className="text-muted-foreground">
-          <strong className="text-foreground">
-            Range: {formatCurrency(outputs.ppaLow, currency)} - {formatCurrency(outputs.ppaHigh, currency)} per SQL meeting
-          </strong>
-          <br />
-          <small>(35% of recommended budget)</small>
-        </div>
+      {/* Pricing Algorithm Explanation */}
+      <div className="bg-card border border-border rounded-lg p-4 mb-6 text-sm">
+        <div className="font-semibold text-primary mb-2">📊 How These Prices Are Calculated</div>
+        <ul className="text-muted-foreground space-y-1 list-disc list-inside">
+          <li><strong>Retainer Anchor:</strong> Based on {getClientTypeLabel(selectedClientType)} deal velocity ({outputs.monthlyGap > 0 ? 'adjusted for pipeline gap' : 'base rate'}) × industry CAC floor ({(INDUSTRY_RANGES[selectedClientType || 'saas'].low * 100).toFixed(1)}%)</li>
+          <li><strong>PPA Calculation:</strong> 35% of max cost-per-meeting ({(INDUSTRY_RANGES[selectedClientType || 'saas'].high * 100).toFixed(1)}% ceiling) with volume discounts applied</li>
+          <li><strong>Guardrails:</strong> 10% cheaper than current CAC, capped at 50% of S&M budget</li>
+          <li><strong>Floor Protection:</strong> Minimum {formatCurrency(FLOOR_VALUES[currency], currency)} retainer to ensure service viability</li>
+        </ul>
       </div>
 
       {/* Your Service Pricing */}

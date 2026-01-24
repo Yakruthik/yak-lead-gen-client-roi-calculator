@@ -1,8 +1,9 @@
-// Exchange rates (Jan 2026)
+// Exchange rates (Jan 2026) - Updated constants
+// USD to INR: 92, USD to AED: 3.6725
 export const rates = {
-  INR: { symbol: '₹', toUSD: 0.01155, toAED: 0.04239 },
-  USD: { symbol: '$', toINR: 86.54, toAED: 3.67 },
-  AED: { symbol: 'د.إ', toINR: 23.58, toUSD: 0.272 }
+  INR: { symbol: '₹', toUSD: 1/92, toAED: 3.6725/92 },
+  USD: { symbol: '$', toINR: 92, toAED: 3.6725 },
+  AED: { symbol: 'د.إ', toINR: 92/3.6725, toUSD: 1/3.6725 }
 };
 
 export type Currency = 'INR' | 'USD' | 'AED';

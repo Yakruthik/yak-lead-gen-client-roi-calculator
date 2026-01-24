@@ -62,6 +62,11 @@ export interface CalculatorOutputs {
   costPerSQL: number;
   netRevenue: number;
   roi: string;
+  
+  // New metrics
+  effectiveTakeRate: number;
+  newRevenueGenerated: number;
+  budgetHealthStatus: 'safe' | 'warning' | 'none';
 }
 
 const defaultInputs: CalculatorInputs = {
@@ -143,12 +148,27 @@ export function useCalculator() {
     // GRR Required calculation (from v5)
     const grrRequired = inputs.customerLifetime > 0 ? 100 - (100 / inputs.customerLifetime) : 0;
     
-    const annualCost = (inputs.yourRetainer * 12) + (inputs.yourPPA * currentAnnualSQLs);
+    // Annual cost uses Monthly Gap in SQLs, not currentSQLMeetings
+    const annualCost = (inputs.yourRetainer * 12) + (inputs.yourPPA * monthlyGap * 12);
     const breakeven = calculatedAacv > 0 ? (annualCost / calculatedAacv).toFixed(2) : '0';
     const servicePercent = calculatedAacv > 0 ? ((annualCost / calculatedAacv) * 100).toFixed(1) : '0';
-    const costPerSQL = currentAnnualSQLs > 0 ? annualCost / currentAnnualSQLs : 0;
+    
+    // Cost per SQL based on monthly gap SQLs provided
+    const totalSQLsProvided = monthlyGap * 12;
+    const costPerSQL = totalSQLsProvided > 0 ? annualCost / totalSQLsProvided : 0;
     const netRevenue = revenuePotential - annualCost;
     const roi = annualCost > 0 ? (revenuePotential / annualCost).toFixed(1) : '0';
+
+    // New metrics: Effective Take Rate
+    const totalAnnualMeetings = totalMeetingsNeeded;
+    const newRevenueGenerated = sqlsPerWin > 0 ? (totalAnnualMeetings / sqlsPerWin) * calculatedAacv : 0;
+    const effectiveTakeRate = newRevenueGenerated > 0 ? (annualCost / newRevenueGenerated) * 100 : 0;
+
+    // Budget Health Check
+    let budgetHealthStatus: 'safe' | 'warning' | 'none' = 'none';
+    if (inputs.smBudget > 0) {
+      budgetHealthStatus = annualCost > inputs.smBudget * 0.5 ? 'warning' : 'safe';
+    }
 
     // Pricing recommendations
     const pricing = getPricingRange(selectedClientType, calculatedAacv);
@@ -179,6 +199,9 @@ export function useCalculator() {
       costPerSQL,
       netRevenue,
       roi,
+      effectiveTakeRate,
+      newRevenueGenerated,
+      budgetHealthStatus,
     };
   }, [inputs, selectedClientType]);
 

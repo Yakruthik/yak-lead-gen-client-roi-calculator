@@ -80,21 +80,25 @@ export function Section3({ inputs, outputs, currency, selectedClientType, onRese
   // Script 4: Pipeline Pressure (Best for Founders/Sales Reps in Trenches)
   const script4 = `Here's the reality: You need ${highlight(inputs.newClientTarget + ' new clients')} at ${highlight(fmt(outputs.calculatedAacv))} each. Your pipeline is ${highlight(outputs.monthlyGap.toFixed(1) + ' SQL meetings per month')} short of what you need to hit that target. That's the problem. Your close rate is locked in. Your deal size is locked in. What's NOT locked in is your pipeline. For ${highlight(fmt(outputs.annualCost))} annually, I solve that one variable. You hit your target. That's the deal.`;
 
-  // Script 5: The LTV Math Angle (Best for Data-Driven Buyers) - Dynamic based on client type
-  const script5 = `Here's the math that matters for scaling: your LTV is ${highlight(fmt(outputs.ltv))}. That's your AACV of ${highlight(fmt(outputs.calculatedAacv))} multiplied by your average client lifespan of <span class="inline-block bg-secondary/20 px-2 py-0.5 rounded border border-secondary text-secondary font-semibold">${inputs.customerLifetime} years</span>. That's your revenue ceiling per client.
+  // Script 5: The LTV Math Angle (Best for Data-Driven Buyers) - Dynamic based on client type and acvMode
+  const lifetimeLabel = inputs.acvMode === 'acv' ? 'average client lifespan' : 'contract duration';
+  const lifetimeYears = inputs.acvMode === 'acv' ? inputs.customerLifetime : inputs.contractTerm;
+  
+  const script5 = `Here's the math that matters for scaling: your LTV is ${highlight(fmt(outputs.ltv))}. That's your AACV of ${highlight(fmt(outputs.calculatedAacv))} multiplied by your ${dynamicHighlight(lifetimeLabel + ' of ' + lifetimeYears + ' years')}. That's your revenue ceiling per client.
 
 Against that, you can afford to spend up to ${dynamicHighlight(typeConfig.ltvOnCacRange)} of LTV on CAC and still be healthy long-term. That gives you a budget of roughly ${dynamicHighlight(fmt(ltvBudgetMax))} per client to acquire them.
 
 My investment of ${highlight(fmt(outputs.costPerSQL))} per qualified meeting is well within that ceiling. And since you need to speak with ${highlight(inputs.sqlsPerWin.toString())} qualified leads to find just one buyer, my total CAC per client through my service is efficient. This is how you scale without burning out your S&M team.`;
 
-  // Script 6: CAC Efficiency (Best for CFOs/Finance Buyers) - Dynamic based on client type
+  // Script 6: CAC Efficiency (Best for CFOs/Finance Buyers) - Dynamic based on client type with CORRECT CAC ranges
+  const cacRangeForScript = `${(clientTypeConfig[selectedClientType || 'saas'].cacRange.split('-')[0])}%-${(clientTypeConfig[selectedClientType || 'saas'].cacRange.split('-')[1])}`;
   const cacMaxPercent = parseFloat(typeConfig.cacRange.split('-')[1]);
   const isHealthy = outputs.cacPercent <= cacMaxPercent;
   const benefitStatement = isHealthy 
     ? "You have the margin to scale aggressively with precision."
     : "You need to stop the bleeding by shifting to higher-quality, lower-waste channels.";
   
-  const script6 = `Let me frame this as a CAC optimization play. Right now, your CAC is ${highlight(outputs.cacPercent.toFixed(1) + '%')} of AACV. ${dynamicHighlight('Industry standard for ' + typeConfig.label + ' is ' + typeConfig.cacRange + ' of AACV.')} You're at ${highlight(outputs.cacPercent.toFixed(1) + '%')}. Since you're ${isHealthy ? 'below' : 'above'} that ${cacMaxPercent}% ceiling, ${benefitStatement}
+  const script6 = `Let me frame this as a CAC optimization play. Right now, your CAC is ${highlight(outputs.cacPercent.toFixed(1) + '%')} of AACV. ${dynamicHighlight('Industry standard for ' + typeConfig.label + ' is ' + cacRangeForScript + ' of AACV.')} You're at ${highlight(outputs.cacPercent.toFixed(1) + '%')}. Since you're ${isHealthy ? 'below' : 'above'} that ${cacMaxPercent}% ceiling, ${benefitStatement}
 
 The math here is simple: instead of spending money on broad campaigns that generate low-quality volume, you're investing ${highlight(fmt(outputs.annualCost))} annually in qualified leads that match your ICP. We reduce your CAC waste and improve your close rate because you're not chasing tire-kickers.
 

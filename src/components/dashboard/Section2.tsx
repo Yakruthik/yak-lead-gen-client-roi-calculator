@@ -45,13 +45,13 @@ const cacBenchmarks: Record<string, string> = {
   ecommerce: 'Total Benchmark: 10-20% (includes salaries, ads, tools, etc.)',
 };
 
-// LTV:CAC ratio hints by client type
-const ltvCacHints: Record<string, string> = {
-  saas: 'Healthy = 3:1 or higher. Below 2:1 = need to reduce CAC or improve retention',
-  agency: 'Healthy = 4:1 or higher. Below 3:1 = need to reduce CAC or improve retention',
-  industrial: 'Healthy = 4:1 or higher. Below 3:1 = need to reduce CAC or improve retention',
-  consulting: 'Healthy = 3:1 to 5:1. Below 2.5:1 = need to reduce CAC or improve retention',
-  ecommerce: 'Healthy = 5:1 or higher. Below 4:1 = need to reduce CAC or improve retention',
+// LTV:CAC ratio hints and minimum thresholds by client type
+const ltvCacHints: Record<string, { hint: string; min: number }> = {
+  saas: { hint: 'Healthy = 3:1 or higher. Below 2:1 = need to reduce CAC or improve retention', min: 3 },
+  agency: { hint: 'Healthy = 4:1 or higher. Below 3:1 = need to reduce CAC or improve retention', min: 4 },
+  industrial: { hint: 'Healthy = 4:1 or higher. Below 3:1 = need to reduce CAC or improve retention', min: 4 },
+  consulting: { hint: 'Healthy = 3:1 to 5:1. Below 2.5:1 = need to reduce CAC or improve retention', min: 3 },
+  ecommerce: { hint: 'Healthy = 5:1 or higher. Below 4:1 = need to reduce CAC or improve retention', min: 5 },
 };
 
 function getClientTypeLabel(type: ClientType): string {
@@ -140,11 +140,23 @@ export function Section2({ inputs, outputs, updateInput, currency, selectedClien
       </div>
 
       <div className="grid md:grid-cols-2 gap-5 mb-6">
-        <MetricCard
-          label="LTV:CAC RATIO"
-          value={outputs.ltvCacRatio + ':1'}
-          description={ltvCacHints[selectedClientType || 'saas']}
-        />
+        {(() => {
+          const clientType = selectedClientType || 'saas';
+          const { hint, min } = ltvCacHints[clientType];
+          const ratioValue = parseFloat(outputs.ltvCacRatio) || 0;
+          const isHealthy = ratioValue >= min;
+          const ratioColor = outputs.ltvCacRatio === '—' ? undefined : (isHealthy ? 'green' : 'red');
+          
+          return (
+            <MetricCard
+              label="🔴 LTV:CAC RATIO"
+              value={outputs.ltvCacRatio + ':1'}
+              description={hint}
+              highlight={ratioColor}
+              showCompulsory
+            />
+          );
+        })()}
         <MetricCard
           label="🔴 PIPELINE VALUE PER MEETING"
           value={formatCurrency(outputs.valuePerMeeting, currency)}

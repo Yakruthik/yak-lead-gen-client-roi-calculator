@@ -6,10 +6,9 @@ interface Section1Props {
   inputs: CalculatorInputs;
   updateInput: <K extends keyof CalculatorInputs>(key: K, value: CalculatorInputs[K]) => void;
   currency: Currency;
-  grrRequired: number;
 }
 
-export function Section1({ inputs, updateInput, currency, grrRequired }: Section1Props) {
+export function Section1({ inputs, updateInput, currency }: Section1Props) {
   return (
     <section className="mb-10">
       <div className="flex items-center gap-3 mb-6 pb-3 border-b-2 border-secondary">
@@ -108,8 +107,8 @@ export function Section1({ inputs, updateInput, currency, grrRequired }: Section
           required
         />
         <InputField
-          label="SQLs-Meetings-to-Win Ratio"
-          question="In average, how many qualified first meetings (SQLs) do you need to take to close ONE deal? (e.g. If you close 1 in 5, enter 5)"
+          label="Current SQLs-Meetings-to-Win Ratio"
+          question="In average, how many qualified first meetings (SQLs) do you currently take to close ONE deal? (e.g. If you close 1 in 5, enter 5) Note: It's SQL meets not Generic ICP meets"
           value={inputs.sqlsPerWin}
           onChange={(v) => updateInput('sqlsPerWin', v)}
           placeholder="e.g., 5"
@@ -129,7 +128,7 @@ export function Section1({ inputs, updateInput, currency, grrRequired }: Section
         />
         <InputField
           label="Current Annual S&M Spend"
-          question="What's your total annual sales & marketing budget?"
+          question="What's your total annual sales & marketing budget?(including salaries, ads, tools, etc.)"
           value={inputs.smBudget}
           onChange={(v) => updateInput('smBudget', v)}
           placeholder="e.g., 2500000"
@@ -142,14 +141,14 @@ export function Section1({ inputs, updateInput, currency, grrRequired }: Section
       <div className="grid md:grid-cols-2 gap-4 mb-5">
         <InputField
           label="Clients Acquired Last Year"
-          question="How many new clients did you close in the last 12 months?"
+          question="How many new clients did you close in the last 12 months?[If Zero, then leave empty]"
           value={inputs.customersAcquired}
           onChange={(v) => updateInput('customersAcquired', v)}
           placeholder="e.g., 4"
         />
         <InputField
           label="Current CAC (Cost-to-Acquire)"
-          question="Do you track what it costs you to acquire one client?"
+          question="Do you track what it costs you to acquire one client?(including salaries, ads, tools, etc.) [If NO, then leave empty]"
           value={inputs.currentCAC}
           onChange={(v) => updateInput('currentCAC', v)}
           placeholder="e.g., 625000"
@@ -161,51 +160,23 @@ export function Section1({ inputs, updateInput, currency, grrRequired }: Section
       <h3 className="text-secondary font-semibold text-lg mt-6 mb-4">⚠️ Client Health & Retention</h3>
       <div className="grid md:grid-cols-2 gap-4 mb-5">
         <InputField
-          label="Gross Retention Rate (GRR) %"
-          question="What % of your client revenue stayed with you (excluding expansion)?"
-          value={inputs.grr}
-          onChange={(v) => updateInput('grr', v)}
-          placeholder="e.g., 92"
-          min={0}
-          max={100}
-          required
-        />
-        <InputField
-          label="Active Clients (Current)"
-          question="How many active client accounts do you have right now?"
+          label="Active Clients Number(Current)"
+          question="How many active client logo accounts do you have right now?"
           value={inputs.activeCustomers}
           onChange={(v) => updateInput('activeCustomers', v)}
           placeholder="e.g., 30"
           required
         />
-      </div>
-
-      <div className="grid md:grid-cols-2 gap-4 mb-5">
         <InputField
-          label="Annual Client Churn Rate %"
-          question="What % of your clients typically churn or don't renew each year?"
+          label="Annual Client Logo Churn Rate %"
+          question="What % of your client logos typically churn or don't renew each year?"
           value={inputs.churnRate}
           onChange={(v) => updateInput('churnRate', v)}
           placeholder="e.g., 8"
           min={0}
           max={100}
           required
-          autoCalculateNote="Auto-calculated from GRR, but override if known"
         />
-        <div className="flex flex-col">
-          <label className="font-semibold text-foreground text-sm mb-2 flex items-center gap-2">
-            GRR Required (Based on Lifetime)
-            <span className="text-[10px] px-2 py-0.5 rounded font-bold bg-success text-success-foreground">
-              CALCULATED
-            </span>
-          </label>
-          <span className="text-xs text-muted-foreground italic mb-1.5">
-            💡 Based on your Client Lifetime: 100 - (100 ÷ Lifetime)
-          </span>
-          <div className="px-3 py-2.5 border-2 border-success/50 rounded-lg bg-success/10 text-success font-bold">
-            {grrRequired.toFixed(1)}%
-          </div>
-        </div>
       </div>
 
       <div className="bg-secondary/10 border border-secondary/20 border-l-4 border-l-secondary rounded-lg p-4 mt-5">

@@ -1,5 +1,11 @@
 import { useState, useCallback, useMemo } from 'react';
-import { Currency } from '@/lib/currency';
+import { Currency, formatCurrency } from '@/lib/currency';
+
+// Helper function to format currency for disqualification message
+const formatCurrencyForDisqualification = (amount: number, currency: Currency): string => {
+  const symbols: Record<Currency, string> = { USD: '$', INR: '₹', AED: 'AED ' };
+  return `${symbols[currency]}${Math.round(amount).toLocaleString()}`;
+};
 
 export type ClientType = 'saas' | 'agency' | 'industrial' | 'consulting' | 'ecommerce' | null;
 
@@ -91,18 +97,18 @@ export interface CalculatorOutputs {
 const defaultInputs: CalculatorInputs = {
   acvMode: 'acv',
   aacv: 0,
-  customerLifetime: 1,
+  customerLifetime: 0,
   tcv: 0,
-  contractTerm: 1,
+  contractTerm: 0,
   newClientTarget: 0,
-  sqlsPerWin: 1,
+  sqlsPerWin: 0,
   currentSQLMeetings: 0,
   smBudget: 0,
-  customersAcquired: 1,
+  customersAcquired: 0,
   currentCAC: 0,
-  grr: 90,
+  grr: 0,
   activeCustomers: 0,
-  churnRate: 10,
+  churnRate: 0,
   yourRetainer: 0,
   yourPPA: 0,
 };
@@ -146,17 +152,21 @@ export function useCalculator() {
   }, []);
 
   const outputs = useMemo((): CalculatorOutputs => {
-    // Calculate AACV based on mode
+    // Calculate AACV based on mode - STRICT TAB ISOLATION
     let calculatedAacv = 0;
     let ltv = 0;
+    let lifetimeYears = 0;
     
     if (inputs.acvMode === 'acv') {
+      // Only use ACV tab values
       calculatedAacv = inputs.aacv || 0;
-      const lifetime = inputs.customerLifetime || 1;
-      ltv = calculatedAacv * lifetime;
+      lifetimeYears = inputs.customerLifetime || 0;
+      ltv = calculatedAacv * (lifetimeYears || 1);
     } else {
-      const term = inputs.contractTerm || 1;
+      // Only use TCV tab values
+      const term = inputs.contractTerm || 0;
       calculatedAacv = term > 0 ? (inputs.tcv || 0) / term : 0;
+      lifetimeYears = term;
       ltv = inputs.tcv || 0;
     }
 
@@ -248,16 +258,28 @@ export function useCalculator() {
 
     const ppaBase = (maxCostPerMeeting * 0.35) * volumeDiscount;
 
-    // 3. Competitive & Budget Guardrails
+    // 3. Competitive & Budget Guardrails with SMART FLOOR
     let ppaAdjusted = ppaBase;
 
-    // Guard 1: Current CAC Cap (Must be 10% cheaper than current CAC)
-    if (effectiveCAC > 0 && gap > 0) {
+    // Smart Floor for Competitive Pricing
+    const minViableCAC = calculatedAacv * 0.05;
+    let competitiveCap: number;
+    
+    if (effectiveCAC > minViableCAC) {
+      // Their CAC is realistic, aim to beat it by 10%
+      competitiveCap = effectiveCAC * 0.90;
+    } else {
+      // Their CAC is too low to be real (e.g., ad spend only), use industry minimum
+      competitiveCap = minViableCAC;
+    }
+
+    // Guard 1: Apply competitive cap
+    if (gap > 0) {
       const estimatedCPA = (finalRetainerAnchor / adjustedVelocity) + (ppaBase * safeSqlsToWin);
-      const targetCPA = effectiveCAC * 0.90;
+      const finalCPA = Math.min(estimatedCPA, competitiveCap);
       
-      if (estimatedCPA > targetCPA) {
-        const ratio = targetCPA / estimatedCPA;
+      if (estimatedCPA > finalCPA) {
+        const ratio = finalCPA / estimatedCPA;
         ppaAdjusted = ppaBase * ratio;
       }
     }
@@ -286,9 +308,14 @@ export function useCalculator() {
     const liteRetainer = Math.max(floor, targetMonthlyRevenue * 0.30);
     const litePPA = gap > 0 ? (targetMonthlyRevenue - liteRetainer) / gap : 0;
 
+    // Calculate minimum AACV required for disqualification message
+    const minAacvRequired = (floor * 12) / (adjustedVelocity * ranges.low);
+    
     const pricingTiers: PricingRecommendation = {
       disqualified: retainerBaseRaw < floor,
-      disqualificationReason: retainerBaseRaw < floor ? "AACV too low for minimum service level." : undefined,
+      disqualificationReason: retainerBaseRaw < floor 
+        ? `AACV too low for minimum service level. Min AACV required = ${formatCurrencyForDisqualification(minAacvRequired, currency)}` 
+        : undefined,
       aggressive: {
         name: "Enterprise / Scale",
         retainer: Math.round(aggRetainer),

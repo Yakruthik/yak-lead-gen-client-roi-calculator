@@ -28,7 +28,6 @@ const Index = () => {
           inputs={inputs} 
           updateInput={updateInput} 
           currency={currency}
-          grrRequired={outputs.grrRequired}
         />
         
         <Section2 

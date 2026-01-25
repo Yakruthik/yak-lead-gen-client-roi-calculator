@@ -65,11 +65,6 @@ export function Section3({ inputs, outputs, currency, selectedClientType, onRese
   const typeConfig = clientTypeConfig[selectedClientType || 'saas'];
   const ltvBudgetMax = outputs.ltv * typeConfig.ltvOnCacMax;
 
-  // Determine lifetime label and value based on acvMode
-  const lifetimeLabel = inputs.acvMode === 'acv' ? 'client lifespan' : 'contract duration';
-  const lifetimeValue = inputs.acvMode === 'acv' ? inputs.customerLifetime : inputs.contractTerm;
-  const lifetimeMetricLabel = inputs.acvMode === 'acv' ? 'Client Lifetime' : 'Contract Duration';
-
   // Script 1: ROI Breakeven (Best for CFOs & Finance-Focused Buyers)
   const script1 = `Your average deal is ${highlight(fmt(outputs.calculatedAacv))}. My annual cost is ${highlight(fmt(outputs.annualCost))}. So mathematically, you break even after closing just ${highlight(outputs.breakeven + ' deals')} with the leads I generate. Every deal after deal number ${outputs.breakeven} is pure profit for you. Given that you're targeting ${highlight(inputs.newClientTarget + ' new clients')} annually, this investment pays for itself by Month 3 at your current conversion rate.`;
 
@@ -85,8 +80,8 @@ export function Section3({ inputs, outputs, currency, selectedClientType, onRese
   // Script 4: Pipeline Pressure (Best for Founders/Sales Reps in Trenches)
   const script4 = `Here's the reality: You need ${highlight(inputs.newClientTarget + ' new clients')} at ${highlight(fmt(outputs.calculatedAacv))} each. Your pipeline is ${highlight(outputs.monthlyGap.toFixed(1) + ' SQL meetings per month')} short of what you need to hit that target. That's the problem. Your close rate is locked in. Your deal size is locked in. What's NOT locked in is your pipeline. For ${highlight(fmt(outputs.annualCost))} annually, I solve that one variable. You hit your target. That's the deal.`;
 
-  // Script 5: The LTV Math Angle (Best for Data-Driven Buyers) - Dynamic based on acvMode
-  const script5 = `Here's the math that matters for scaling: your LTV is ${highlight(fmt(outputs.ltv))}. That's your AACV of ${highlight(fmt(outputs.calculatedAacv))} multiplied by your ${lifetimeLabel} of ${dynamicHighlight(lifetimeValue + ' years')}.
+  // Script 5: The LTV Math Angle (Best for Data-Driven Buyers) - Dynamic based on client type
+  const script5 = `Here's the math that matters for scaling: your LTV is ${highlight(fmt(outputs.ltv))}. That's your AACV of ${highlight(fmt(outputs.calculatedAacv))} multiplied by your average client lifespan of <span class="inline-block bg-secondary/20 px-2 py-0.5 rounded border border-secondary text-secondary font-semibold">${inputs.customerLifetime} years</span>. That's your revenue ceiling per client.
 
 Against that, you can afford to spend up to ${dynamicHighlight(typeConfig.ltvOnCacRange)} of LTV on CAC and still be healthy long-term. That gives you a budget of roughly ${dynamicHighlight(fmt(ltvBudgetMax))} per client to acquire them.
 

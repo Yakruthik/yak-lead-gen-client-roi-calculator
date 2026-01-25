@@ -1,18 +1,5 @@
 import { useState, useCallback, useMemo } from 'react';
-import { Currency, rates } from '@/lib/currency';
-
-// Simple currency formatter for disqualification message
-const formatCurrencySimple = (amount: number, currency: Currency): string => {
-  const config = rates[currency];
-  if (currency === 'INR') {
-    if (amount >= 10000000) return `${config.symbol}${(amount / 10000000).toFixed(1)} Cr`;
-    if (amount >= 100000) return `${config.symbol}${(amount / 100000).toFixed(1)} L`;
-    return `${config.symbol}${Math.round(amount).toLocaleString('en-IN')}`;
-  }
-  if (amount >= 1000000) return `${config.symbol}${(amount / 1000000).toFixed(1)}M`;
-  if (amount >= 1000) return `${config.symbol}${(amount / 1000).toFixed(0)}K`;
-  return `${config.symbol}${Math.round(amount).toLocaleString()}`;
-};
+import { Currency } from '@/lib/currency';
 
 export type ClientType = 'saas' | 'agency' | 'industrial' | 'consulting' | 'ecommerce' | null;
 
@@ -104,18 +91,18 @@ export interface CalculatorOutputs {
 const defaultInputs: CalculatorInputs = {
   acvMode: 'acv',
   aacv: 0,
-  customerLifetime: 0,
+  customerLifetime: 1,
   tcv: 0,
-  contractTerm: 0,
+  contractTerm: 1,
   newClientTarget: 0,
-  sqlsPerWin: 0,
+  sqlsPerWin: 1,
   currentSQLMeetings: 0,
   smBudget: 0,
-  customersAcquired: 0,
+  customersAcquired: 1,
   currentCAC: 0,
-  grr: 0,
+  grr: 90,
   activeCustomers: 0,
-  churnRate: 0,
+  churnRate: 10,
   yourRetainer: 0,
   yourPPA: 0,
 };
@@ -159,21 +146,16 @@ export function useCalculator() {
   }, []);
 
   const outputs = useMemo((): CalculatorOutputs => {
-    // Calculate AACV based on mode - ONLY use values from the selected tab
+    // Calculate AACV based on mode
     let calculatedAacv = 0;
     let ltv = 0;
-    let effectiveLifetime = 0;
     
     if (inputs.acvMode === 'acv') {
-      // Only use AACV tab values
       calculatedAacv = inputs.aacv || 0;
       const lifetime = inputs.customerLifetime || 1;
-      effectiveLifetime = lifetime;
       ltv = calculatedAacv * lifetime;
     } else {
-      // Only use TCV tab values - do NOT pull from AACV tab
       const term = inputs.contractTerm || 1;
-      effectiveLifetime = term;
       calculatedAacv = term > 0 ? (inputs.tcv || 0) / term : 0;
       ltv = inputs.tcv || 0;
     }
@@ -270,9 +252,7 @@ export function useCalculator() {
     let ppaAdjusted = ppaBase;
 
     // Guard 1: Current CAC Cap (Must be 10% cheaper than current CAC)
-    // SANITY CHECK: Only apply if effectiveCAC > 5% of AACV (otherwise it's likely inaccurate ad-spend only)
-    const cacIsReliable = effectiveCAC > 0 && calculatedAacv > 0 && (effectiveCAC / calculatedAacv) > 0.05;
-    if (cacIsReliable && gap > 0) {
+    if (effectiveCAC > 0 && gap > 0) {
       const estimatedCPA = (finalRetainerAnchor / adjustedVelocity) + (ppaBase * safeSqlsToWin);
       const targetCPA = effectiveCAC * 0.90;
       
@@ -306,14 +286,9 @@ export function useCalculator() {
     const liteRetainer = Math.max(floor, targetMonthlyRevenue * 0.30);
     const litePPA = gap > 0 ? (targetMonthlyRevenue - liteRetainer) / gap : 0;
 
-    // Calculate minimum AACV required for disqualification message
-    const minAacvRequired = (floor * 12) / (adjustedVelocity * ranges.low);
-    
     const pricingTiers: PricingRecommendation = {
       disqualified: retainerBaseRaw < floor,
-      disqualificationReason: retainerBaseRaw < floor 
-        ? `AACV too low for minimum service level. Min AACV required = ${formatCurrencySimple(minAacvRequired, currency)}` 
-        : undefined,
+      disqualificationReason: retainerBaseRaw < floor ? "AACV too low for minimum service level." : undefined,
       aggressive: {
         name: "Enterprise / Scale",
         retainer: Math.round(aggRetainer),

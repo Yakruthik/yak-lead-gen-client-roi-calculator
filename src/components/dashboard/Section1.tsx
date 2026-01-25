@@ -108,8 +108,8 @@ export function Section1({ inputs, updateInput, currency, grrRequired }: Section
           required
         />
         <InputField
-          label="Current SQLs-Meetings-to-Win Ratio"
-          question="In average, how many qualified first meetings (SQLs) do you currently take to close ONE deal? (e.g. If you close 1 in 5, enter 5) Note: It's SQL meets not Generic ICP meets"
+          label="SQLs-Meetings-to-Win Ratio"
+          question="In average, how many qualified first meetings (SQLs) do you need to take to close ONE deal? (e.g. If you close 1 in 5, enter 5)"
           value={inputs.sqlsPerWin}
           onChange={(v) => updateInput('sqlsPerWin', v)}
           placeholder="e.g., 5"
@@ -129,7 +129,7 @@ export function Section1({ inputs, updateInput, currency, grrRequired }: Section
         />
         <InputField
           label="Current Annual S&M Spend"
-          question="What's your total annual sales & marketing budget? (including salaries, ads, tools, etc.)"
+          question="What's your total annual sales & marketing budget?"
           value={inputs.smBudget}
           onChange={(v) => updateInput('smBudget', v)}
           placeholder="e.g., 2500000"
@@ -142,14 +142,14 @@ export function Section1({ inputs, updateInput, currency, grrRequired }: Section
       <div className="grid md:grid-cols-2 gap-4 mb-5">
         <InputField
           label="Clients Acquired Last Year"
-          question="How many new clients did you close in the last 12 months? [If Zero, then leave empty]"
+          question="How many new clients did you close in the last 12 months?"
           value={inputs.customersAcquired}
           onChange={(v) => updateInput('customersAcquired', v)}
           placeholder="e.g., 4"
         />
         <InputField
           label="Current CAC (Cost-to-Acquire)"
-          question="Do you track what it costs you to acquire one client? (including salaries, ads, tools, etc.) [If NO, then leave empty]"
+          question="Do you track what it costs you to acquire one client?"
           value={inputs.currentCAC}
           onChange={(v) => updateInput('currentCAC', v)}
           placeholder="e.g., 625000"

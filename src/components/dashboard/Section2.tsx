@@ -54,6 +54,22 @@ const ltvCacHints: Record<string, string> = {
   ecommerce: 'Healthy = 5:1 or higher. Below 4:1 = need to reduce CAC or improve retention',
 };
 
+// LTV:CAC minimum thresholds by client type
+const ltvCacMinimums: Record<string, number> = {
+  saas: 3,
+  agency: 4,
+  industrial: 4,
+  consulting: 2.5,
+  ecommerce: 5,
+};
+
+function getLtvCacHighlight(ratio: string, clientType: ClientType): 'green' | 'red' | undefined {
+  const numericRatio = parseFloat(ratio);
+  if (isNaN(numericRatio) || ratio === '—') return undefined;
+  const minimum = ltvCacMinimums[clientType || 'saas'];
+  return numericRatio >= minimum ? 'green' : 'red';
+}
+
 function getClientTypeLabel(type: ClientType): string {
   const labels: Record<string, string> = {
     saas: 'B2B SaaS',
@@ -144,6 +160,7 @@ export function Section2({ inputs, outputs, updateInput, currency, selectedClien
           label="LTV:CAC RATIO"
           value={outputs.ltvCacRatio + ':1'}
           description={ltvCacHints[selectedClientType || 'saas']}
+          highlight={getLtvCacHighlight(outputs.ltvCacRatio, selectedClientType)}
         />
         <MetricCard
           label="🔴 PIPELINE VALUE PER MEETING"

@@ -4,13 +4,31 @@ import { ClientType } from '@/hooks/useCalculator';
 interface ClientTypeCardProps {
   type: ClientType;
   title: string;
-  range: string;
-  reason: string;
+  range?: string;
+  reason?: string;
   selected: boolean;
   onSelect: () => void;
 }
 
 export function ClientTypeCard({ title, range, reason, selected, onSelect }: ClientTypeCardProps) {
+  // Simplified version without range/reason for client-facing calculator
+  if (!range && !reason) {
+    return (
+      <button
+        onClick={onSelect}
+        className={cn(
+          'p-3 rounded-lg border-2 text-center transition-all text-sm font-semibold',
+          selected
+            ? 'border-success bg-success/20 text-success'
+            : 'border-border bg-card hover:border-success/50 hover:bg-success/5 text-muted-foreground hover:text-foreground'
+        )}
+      >
+        {title}
+      </button>
+    );
+  }
+
+  // Full version with range and reason
   return (
     <div
       onClick={onSelect}

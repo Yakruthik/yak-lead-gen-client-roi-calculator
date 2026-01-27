@@ -12,7 +12,7 @@ export function Header({
       <header className="text-center mb-10">
         <div className="mb-5 flex items-center justify-center gap-4">
           <img src={YAK_LOGO_URL} alt="YAK Logo" className="h-[71px] w-auto" />
-          <h1 className="text-4xl font-bold text-primary inline-block">YAK Lead Gen - Client ROI Calculator</h1>
+          <h1 className="text-4xl font-bold text-primary inline-block">YAK AI-SDR Lead Gen - Client ROI Calculator</h1>
         </div>
         <p className="text-muted-foreground text-base">
           Data-driven discovery dashboard for AI consultants & sales leaders

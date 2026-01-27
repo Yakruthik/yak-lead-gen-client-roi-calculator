@@ -1,101 +1,88 @@
-import { CalculatorInputs } from '@/hooks/useCalculator';
+import { CalculatorInputs, ClientType } from '@/hooks/useCalculator';
 import { InputField } from './InputField';
+import { ClientTypeCard } from './ClientTypeCard';
 import { Currency } from '@/lib/currency';
 
 interface Section1Props {
   inputs: CalculatorInputs;
   updateInput: <K extends keyof CalculatorInputs>(key: K, value: CalculatorInputs[K]) => void;
   currency: Currency;
+  selectedClientType: ClientType;
+  setSelectedClientType: (type: ClientType) => void;
 }
 
-export function Section1({ inputs, updateInput, currency }: Section1Props) {
+const clientTypes: { type: ClientType; title: string }[] = [
+  { type: 'saas', title: 'B2B SaaS' },
+  { type: 'agency', title: 'Agency' },
+  { type: 'industrial', title: 'Industrial / Manufacturing' },
+  { type: 'consulting', title: 'Consulting / Prof Services' },
+  { type: 'ecommerce', title: 'E-commerce / DTC' },
+];
+
+export function Section1({ inputs, updateInput, currency, selectedClientType, setSelectedClientType }: Section1Props) {
   return (
     <section className="mb-10">
       <div className="flex items-center gap-3 mb-6 pb-3 border-b-2 border-secondary">
         <span className="text-3xl">📋</span>
-        <h2 className="text-2xl font-bold text-primary">Section 1: Discovery Questions</h2>
+        <h2 className="text-2xl font-bold text-primary">Your Revenue Baseline</h2>
       </div>
 
       <div className="bg-card border border-border rounded-lg p-4 mb-5 border-l-4 border-l-secondary">
-        <strong className="text-primary">🎯 Ask these questions naturally.</strong>{' '}
         <span className="text-muted-foreground">
-          Enter values in your selected currency. All calculations auto-update.
+          Enter your current metrics below to analyze your revenue gap.
         </span>
       </div>
 
-      {/* ACV Mode Toggle */}
-      <div className="bg-gradient-to-br from-secondary/10 to-secondary/5 border border-secondary/20 border-l-4 border-l-secondary rounded-lg p-5 mb-5">
-        <h4 className="text-secondary font-semibold mb-3">💰 Contract Value & Lifetime (Choose One Approach)</h4>
-        <div className="flex gap-3 mb-4 flex-wrap">
-          <button
-            className={`px-4 py-2.5 border-2 border-secondary rounded-lg font-semibold text-sm transition-all ${
-              inputs.acvMode === 'acv' 
-                ? 'bg-secondary text-secondary-foreground' 
-                : 'bg-transparent text-secondary hover:bg-secondary/10'
-            }`}
-            onClick={() => updateInput('acvMode', 'acv')}
-          >
-            Annual Avg Value
-          </button>
-          <button
-            className={`px-4 py-2.5 border-2 border-secondary rounded-lg font-semibold text-sm transition-all ${
-              inputs.acvMode === 'tcv' 
-                ? 'bg-secondary text-secondary-foreground' 
-                : 'bg-transparent text-secondary hover:bg-secondary/10'
-            }`}
-            onClick={() => updateInput('acvMode', 'tcv')}
-          >
-            Total Deal + Term
-          </button>
+      {/* Business Model Selector */}
+      <div className="bg-gradient-to-br from-success/10 to-success/5 border border-success/20 border-l-4 border-l-success rounded-lg p-5 mb-6">
+        <h4 className="text-success font-semibold mb-3 text-lg">Select Your Business Model</h4>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          {clientTypes.map((ct) => (
+            <ClientTypeCard
+              key={ct.type}
+              type={ct.type}
+              title={ct.title}
+              selected={selectedClientType === ct.type}
+              onSelect={() => setSelectedClientType(ct.type)}
+            />
+          ))}
         </div>
-
-        {inputs.acvMode === 'acv' ? (
-          <div className="grid md:grid-cols-2 gap-4">
-            <InputField
-              label="Annual Average Contract Value (AACV)"
-              question="What's the typical annual revenue you get from one client?"
-              value={inputs.aacv}
-              onChange={(v) => updateInput('aacv', v)}
-              placeholder="e.g., 5000000"
-              required
-              currency={currency}
-              showCurrencyTrio
-            />
-            <InputField
-              label="Client Lifetime (Years)"
-              question="How long does a typical client stay with you?"
-              value={inputs.customerLifetime}
-              onChange={(v) => updateInput('customerLifetime', v)}
-              placeholder="e.g., 3"
-              step="0.5"
-              required
-            />
-          </div>
-        ) : (
-          <div className="grid md:grid-cols-2 gap-4">
-            <InputField
-              label="Total Contract Value (TCV)"
-              question="What's the total deal size for a typical contract?"
-              value={inputs.tcv}
-              onChange={(v) => updateInput('tcv', v)}
-              placeholder="e.g., 15000000"
-              required
-              currency={currency}
-              showCurrencyTrio
-            />
-            <InputField
-              label="Contract Duration (Years)"
-              question="How long is the typical contract term?"
-              value={inputs.contractTerm}
-              onChange={(v) => updateInput('contractTerm', v)}
-              placeholder="e.g., 3"
-              step="0.5"
-              required
-            />
-          </div>
-        )}
       </div>
 
+      {/* Pro Tip */}
+      <div className="bg-secondary/10 border border-secondary/20 border-l-4 border-l-secondary rounded-lg p-4 mb-6">
+        <strong className="text-secondary">💡 Pro Tip:</strong>{' '}
+        <span className="text-muted-foreground">
+          When asking about Annual Average Contract Value, clarify:{' '}
+          <strong className="text-foreground">"I mean the typical annual value of ONE client, not all clients combined."</strong>
+        </span>
+      </div>
+
+      {/* Contract Value & Lifetime */}
+      <h3 className="text-secondary font-semibold text-lg mt-6 mb-4">💰 Contract Value & Lifetime</h3>
+      <div className="grid md:grid-cols-2 gap-4 mb-5">
+        <InputField
+          label="Annual Avg Contract Value (AACV)"
+          question="What's the typical annual revenue you get from one client?"
+          value={inputs.aacv}
+          onChange={(v) => updateInput('aacv', v)}
+          placeholder="e.g., 5000000"
+          required
+          currency={currency}
+          showCurrencyTrio
+        />
+        <InputField
+          label="Client Lifetime (Years)"
+          question="How long does a typical client stay with you?"
+          value={inputs.customerLifetime}
+          onChange={(v) => updateInput('customerLifetime', v)}
+          placeholder="e.g., 3"
+          step="0.5"
+          required
+        />
+      </div>
+
+      {/* Growth & Pipeline */}
       <h3 className="text-secondary font-semibold text-lg mt-6 mb-4">🎯 Growth & Pipeline</h3>
       <div className="grid md:grid-cols-2 gap-4 mb-5">
         <InputField
@@ -116,6 +103,7 @@ export function Section1({ inputs, updateInput, currency }: Section1Props) {
         />
       </div>
 
+      {/* Current Pipeline Status */}
       <h3 className="text-secondary font-semibold text-lg mt-6 mb-4">📞 Current Pipeline Status</h3>
       <div className="grid md:grid-cols-2 gap-4 mb-5">
         <InputField
@@ -137,39 +125,53 @@ export function Section1({ inputs, updateInput, currency }: Section1Props) {
         />
       </div>
 
+      {/* Client Acquisition & Performance */}
       <h3 className="text-secondary font-semibold text-lg mt-6 mb-4">📊 Client Acquisition & Performance</h3>
       <div className="grid md:grid-cols-2 gap-4 mb-5">
         <InputField
-          label="Clients Acquired Last Year"
-          question="How many new clients did you close in the last 12 months?[If Zero, then leave empty]"
+          label="Customers Acquired Last Year"
+          question="How many new clients did you close in the last 12 months?"
           value={inputs.customersAcquired}
           onChange={(v) => updateInput('customersAcquired', v)}
           placeholder="e.g., 4"
+          required
         />
         <InputField
           label="Current CAC (Cost-to-Acquire)"
-          question="Do you track what it costs you to acquire one client?(including salaries, ads, tools, etc.) [If NO, then leave empty]"
+          question="Do you track what it costs you to acquire one client?(including salaries, ads, tools, etc.)"
           value={inputs.currentCAC}
           onChange={(v) => updateInput('currentCAC', v)}
           placeholder="e.g., 625000"
           currency={currency}
           showCurrencyTrio
+          required
         />
       </div>
 
+      {/* Client Health & Retention */}
       <h3 className="text-secondary font-semibold text-lg mt-6 mb-4">⚠️ Client Health & Retention</h3>
-      <div className="grid md:grid-cols-2 gap-4 mb-5">
+      <div className="grid md:grid-cols-3 gap-4 mb-5">
         <InputField
-          label="Active Clients Number(Current)"
-          question="How many active client logo accounts do you have right now?"
+          label="Gross Retention Rate (GRR) %"
+          question="What percentage of revenue do you retain each year?"
+          value={inputs.grr}
+          onChange={(v) => updateInput('grr', v)}
+          placeholder="e.g., 90"
+          min={0}
+          max={100}
+          required
+        />
+        <InputField
+          label="Active Clients (Current)"
+          question="How many active client accounts do you have right now?"
           value={inputs.activeCustomers}
           onChange={(v) => updateInput('activeCustomers', v)}
           placeholder="e.g., 30"
           required
         />
         <InputField
-          label="Annual Client Logo Churn Rate %"
-          question="What % of your client logos typically churn or don't renew each year?"
+          label="Annual Client Churn Rate %"
+          question="What % of your clients typically churn or don't renew each year?"
           value={inputs.churnRate}
           onChange={(v) => updateInput('churnRate', v)}
           placeholder="e.g., 8"
@@ -177,14 +179,6 @@ export function Section1({ inputs, updateInput, currency }: Section1Props) {
           max={100}
           required
         />
-      </div>
-
-      <div className="bg-secondary/10 border border-secondary/20 border-l-4 border-l-secondary rounded-lg p-4 mt-5">
-        <strong className="text-secondary">💡 Pro Tip:</strong>{' '}
-        <span className="text-muted-foreground">
-          When asking about Annual Average Contract Value, clarify:{' '}
-          <strong className="text-foreground">"I mean the typical annual value of ONE client, not all clients combined."</strong>
-        </span>
       </div>
     </section>
   );

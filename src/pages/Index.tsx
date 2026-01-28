@@ -18,7 +18,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground p-5">
-      <div id="calculator-content" className="max-w-[1400px] mx-auto">
+      <div id="calculator-content" className="max-w-[1400px] mx-auto bg-background text-foreground">
         <Header 
           currency={currency} 
           onCurrencyChange={setCurrency} 

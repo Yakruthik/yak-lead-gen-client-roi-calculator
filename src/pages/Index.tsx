@@ -53,7 +53,8 @@ const Index = () => {
         />
 
         <footer className="text-center mt-16 pt-5 border-t-2 border-border text-muted-foreground text-sm">
-          <p>Built by YAK AI Consulting | Data-driven discovery for precision selling</p>
+          <p>Built by Yakruthik AI Consultancy | Data-driven discovery for precision selling</p>
+          <p className="mt-2">© 2026 YAK Apps. All rights reserved.</p>
         </footer>
       </div>
     </div>

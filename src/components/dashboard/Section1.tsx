@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { CalculatorInputs, ClientType } from '@/hooks/useCalculator';
 import { InputField } from './InputField';
 import { ClientTypeCard } from './ClientTypeCard';
 import { Currency } from '@/lib/currency';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface Section1Props {
   inputs: CalculatorInputs;
@@ -59,28 +61,61 @@ export function Section1({ inputs, updateInput, currency, selectedClientType, se
       </div>
 
       {/* Contract Value & Lifetime */}
-      <h3 className="text-secondary font-semibold text-lg mt-6 mb-4">💰 Contract Value & Lifetime</h3>
-      <div className="grid md:grid-cols-2 gap-4 mb-5">
-        <InputField
-          label="Annual Avg Contract Value (AACV)"
-          question="What's the typical annual revenue you get from one client?"
-          value={inputs.aacv}
-          onChange={(v) => updateInput('aacv', v)}
-          placeholder="e.g., 5000000"
-          required
-          currency={currency}
-          showCurrencyTrio
-        />
-        <InputField
-          label="Client Lifetime (Years)"
-          question="How long does a typical client stay with you?"
-          value={inputs.customerLifetime}
-          onChange={(v) => updateInput('customerLifetime', v)}
-          placeholder="e.g., 3"
-          step="0.5"
-          required
-        />
-      </div>
+      <h3 className="text-secondary font-semibold text-lg mt-6 mb-4">💰 Contract Value & Lifetime (Choose One Approach)</h3>
+      <Tabs defaultValue="aacv" className="mb-5">
+        <TabsList className="grid w-full grid-cols-2 mb-4">
+          <TabsTrigger value="aacv">Annual Value + Lifespan</TabsTrigger>
+          <TabsTrigger value="tcv">Total Deal + Term</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="aacv">
+          <div className="grid md:grid-cols-2 gap-4">
+            <InputField
+              label="Annual Avg Contract Value (AACV)"
+              question="What's the typical annual revenue you get from one client?"
+              value={inputs.aacv}
+              onChange={(v) => updateInput('aacv', v)}
+              placeholder="e.g., 5000000"
+              required
+              currency={currency}
+              showCurrencyTrio
+            />
+            <InputField
+              label="Client Lifetime (Years)"
+              question="How long does a typical client stay with you?"
+              value={inputs.customerLifetime}
+              onChange={(v) => updateInput('customerLifetime', v)}
+              placeholder="e.g., 3"
+              step="0.5"
+              required
+            />
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="tcv">
+          <div className="grid md:grid-cols-2 gap-4">
+            <InputField
+              label="Total Contract Value (TCV)"
+              question="What's the total value of a typical contract over its full duration?"
+              value={inputs.tcv}
+              onChange={(v) => updateInput('tcv', v)}
+              placeholder="e.g., 15000000"
+              required
+              currency={currency}
+              showCurrencyTrio
+            />
+            <InputField
+              label="Contract Duration (Years)"
+              question="How long is the typical contract term?"
+              value={inputs.contractDuration}
+              onChange={(v) => updateInput('contractDuration', v)}
+              placeholder="e.g., 3"
+              step="0.5"
+              required
+            />
+          </div>
+        </TabsContent>
+      </Tabs>
 
       {/* Growth & Pipeline */}
       <h3 className="text-secondary font-semibold text-lg mt-6 mb-4">🎯 Growth & Pipeline</h3>
@@ -150,17 +185,7 @@ export function Section1({ inputs, updateInput, currency, selectedClientType, se
 
       {/* Client Health & Retention */}
       <h3 className="text-secondary font-semibold text-lg mt-6 mb-4">⚠️ Client Health & Retention</h3>
-      <div className="grid md:grid-cols-3 gap-4 mb-5">
-        <InputField
-          label="Gross Retention Rate (GRR) %"
-          question="What percentage of revenue do you retain each year?"
-          value={inputs.grr}
-          onChange={(v) => updateInput('grr', v)}
-          placeholder="e.g., 90"
-          min={0}
-          max={100}
-          required
-        />
+      <div className="grid md:grid-cols-2 gap-4 mb-5">
         <InputField
           label="Active Clients (Current)"
           question="How many active client accounts do you have right now?"

@@ -234,39 +234,58 @@ export function LeadCaptureModal({
 
     setIsSubmitting(true);
 
+    let webhookSuccess = false;
+
     try {
       // 1. Generate PDF and trigger instant download + background upload
-      const { reportLink } = await generatePdfAndUpload();
+      const { success: pdfSuccess, reportLink } = await generatePdfAndUpload();
 
-      // Show immediate feedback
-      toast({
-        title: "Your PDF is downloading!",
-        description: "We'll email the report shortly.",
-      });
+      if (pdfSuccess) {
+        // Show immediate feedback for PDF download
+        toast({
+          title: "Your PDF is downloading!",
+          description: "We'll email the report shortly.",
+        });
+      }
 
       // 2. Build payload with report link
       const payload = buildPayload(reportLink);
 
-      // 3. Send webhook in background (non-blocking for user experience)
+      // 3. Send webhook
       try {
-        await fetch(WEBHOOK_URL, {
+        const response = await fetch(WEBHOOK_URL, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify(payload),
         });
+        
+        if (response.ok) {
+          webhookSuccess = true;
+          toast({
+            title: "Success!",
+            description: "We have mailed you your Client ROI report and Meeting invite, kindly check!",
+          });
+        } else {
+          throw new Error('Webhook response not ok');
+        }
       } catch (webhookError) {
         console.error('Webhook error:', webhookError);
-        // Non-blocking - user already has their PDF
+        webhookSuccess = false;
+        toast({
+          title: "We couldn't save your details",
+          description: "Don't worry! Your PDF has been downloaded. You can still book a call.",
+          variant: "destructive",
+        });
       }
 
       onSuccess();
       onClose();
       resetForm();
 
-      // 4. For booking mode, always open calendar
-      if (mode === 'booking') {
+      // 4. For booking mode, only redirect on webhook ERROR
+      if (mode === 'booking' && !webhookSuccess) {
         window.open(BOOKING_URL, '_blank', 'noopener,noreferrer');
       }
     } catch (error) {
@@ -278,7 +297,7 @@ export function LeadCaptureModal({
         variant: "destructive",
       });
 
-      // Always allow booking redirect even on error
+      // On error, allow booking redirect
       if (mode === 'booking') {
         window.open(BOOKING_URL, '_blank', 'noopener,noreferrer');
       }

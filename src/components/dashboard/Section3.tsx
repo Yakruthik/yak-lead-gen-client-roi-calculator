@@ -73,9 +73,9 @@ export function Section3({ inputs, outputs, updateInput, currency }: Section3Pro
 
       <div className="grid md:grid-cols-2 gap-5 mb-6">
         <MetricCard
-          label="NET REVENUE (AFTER MY COST)"
+          label="NET REVENUE (AFTER INVESTMENT)"
           value={formatCurrency(outputs.netRevenue, currency)}
-          description="Client's Revenue Potential - Projected Annual Investment"
+          description="Your Revenue Potential - Projected Annual Investment"
           highlight={outputs.netRevenue > 0 ? 'green' : 'red'}
           currency={currency}
           rawAmount={outputs.netRevenue}

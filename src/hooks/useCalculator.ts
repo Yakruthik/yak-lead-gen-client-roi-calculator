@@ -4,9 +4,12 @@ import { Currency, formatCurrency } from '@/lib/currency';
 export type ClientType = 'saas' | 'agency' | 'industrial' | 'consulting' | 'ecommerce' | null;
 
 export interface CalculatorInputs {
-  // Contract Value
+  // Contract Value - AACV approach
   aacv: number;
   customerLifetime: number;
+  // Contract Value - TCV approach
+  tcv: number;
+  contractDuration: number;
   
   // Growth & Pipeline
   newClientTarget: number;
@@ -19,7 +22,6 @@ export interface CalculatorInputs {
   currentCAC: number;
   
   // Retention
-  grr: number;
   activeCustomers: number;
   churnRate: number;
   
@@ -54,13 +56,14 @@ export interface CalculatorOutputs {
 const defaultInputs: CalculatorInputs = {
   aacv: 0,
   customerLifetime: 0,
+  tcv: 0,
+  contractDuration: 0,
   newClientTarget: 0,
   sqlsPerWin: 0,
   currentSQLMeetings: 0,
   smBudget: 0,
   customersAcquired: 0,
   currentCAC: 0,
-  grr: 0,
   activeCustomers: 0,
   churnRate: 0,
   hypotheticalBudget: 0,
@@ -76,9 +79,16 @@ export function useCalculator() {
   }, []);
 
   const outputs = useMemo((): CalculatorOutputs => {
-    // Calculate core values
-    const calculatedAacv = inputs.aacv || 0;
-    const lifetimeYears = inputs.customerLifetime || 0;
+    // Calculate core values - support both AACV and TCV approaches
+    let calculatedAacv = inputs.aacv || 0;
+    let lifetimeYears = inputs.customerLifetime || 0;
+    
+    // If TCV approach is used, derive AACV and lifetime from it
+    if (inputs.tcv > 0 && inputs.contractDuration > 0) {
+      calculatedAacv = inputs.tcv / inputs.contractDuration;
+      lifetimeYears = inputs.contractDuration;
+    }
+    
     const ltv = calculatedAacv * (lifetimeYears || 1);
 
     // Pipeline calculations

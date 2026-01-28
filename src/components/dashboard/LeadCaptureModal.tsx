@@ -92,7 +92,6 @@ export function LeadCaptureModal({
     const element = document.getElementById('calculator-content');
     if (!element) return '';
     
-    // Clone the element and remove the Take Action section
     const clone = element.cloneNode(true) as HTMLElement;
     const takeActionSection = clone.querySelector('[data-section="take-action"]');
     if (takeActionSection) {
@@ -102,12 +101,13 @@ export function LeadCaptureModal({
     return clone.outerHTML;
   };
 
-  const buildPayload = () => {
+  const buildPayload = (reportLink: string | null) => {
     return {
       timestamp: new Date().toISOString(),
       name: formData.name.trim(),
       email: formData.email.trim(),
       company: formData.company.trim() || null,
+      report_link: reportLink || 'Upload Failed',
       report_html: generateReportHTML(),
       currency: currency,
       business_model: selectedClientType ? businessModelLabels[selectedClientType] : null,
@@ -144,48 +144,86 @@ export function LeadCaptureModal({
     };
   };
 
-  const downloadPDF = async () => {
+  const generatePdfAndUpload = async (): Promise<{ success: boolean; reportLink: string | null }> => {
+    const element = document.getElementById('calculator-content');
+    if (!element) {
+      console.error('Calculator content not found');
+      return { success: false, reportLink: null };
+    }
+
+    // Hide action section for PDF
+    const actionSection = element.querySelector('[data-section="take-action"]') as HTMLElement;
+    if (actionSection) actionSection.style.display = 'none';
+
     try {
       const html2pdf = (await import('html2pdf.js')).default;
-      const element = document.getElementById('calculator-content');
-      if (!element) return;
+      
+      // Calculate exact dimensions for single-page PDF
+      const totalHeight = element.scrollHeight + 50;
+      const totalWidth = element.offsetWidth;
 
-      // Clone element and remove Take Action section
-      const clone = element.cloneNode(true) as HTMLElement;
-      const takeActionSection = clone.querySelector('[data-section="take-action"]');
-      if (takeActionSection) {
-        takeActionSection.remove();
-      }
-
-      // Temporarily append clone to body for html2pdf
-      clone.style.position = 'absolute';
-      clone.style.left = '-9999px';
-      document.body.appendChild(clone);
+      const filename = `YAK_Report_${formData.name.trim().replace(/\s+/g, '-')}.pdf`;
 
       const opt = {
-        margin: 0.5,
-        filename: 'YAK AI-SDR Lead Gen - Client ROI Calculator.pdf',
+        margin: 0,
+        filename,
         image: { type: 'jpeg' as const, quality: 0.98 },
-        html2canvas: { 
-          scale: 2, 
+        html2canvas: {
+          scale: 2,
           useCORS: true,
-          backgroundColor: '#1a1a2e',
-          scrollY: 0,
+          logging: false,
+          backgroundColor: '#0f172a',
         },
-        jsPDF: { 
-          unit: 'in' as const, 
-          format: 'a4' as const, 
-          orientation: 'portrait' as const 
+        jsPDF: {
+          unit: 'px' as const,
+          format: [totalWidth, totalHeight] as [number, number],
+          orientation: 'portrait' as const,
         },
-        pagebreak: { mode: 'avoid-all' as const }
       };
 
-      await html2pdf().set(opt).from(clone).save();
+      const worker = html2pdf().set(opt).from(element);
       
-      // Clean up
-      document.body.removeChild(clone);
+      // 1. Instant user download
+      worker.save();
+
+      // 2. Background upload to tmpfiles.org
+      let reportLink: string | null = null;
+      
+      try {
+        const pdfBlob = await worker.output('blob');
+        const uploadData = new FormData();
+        uploadData.append('file', pdfBlob, filename);
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 20000);
+
+        const res = await fetch('https://tmpfiles.org/api/v1/upload', {
+          method: 'POST',
+          body: uploadData,
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (res.ok) {
+          const json = await res.json();
+          // Convert to direct download link and force HTTPS
+          reportLink = json.data.url
+            .replace('http://', 'https://')
+            .replace('tmpfiles.org/', 'tmpfiles.org/dl/');
+        }
+      } catch (uploadError) {
+        console.error('PDF upload failed:', uploadError);
+        // Non-blocking - continue with webhook even if upload fails
+      }
+
+      return { success: true, reportLink };
     } catch (error) {
       console.error('PDF generation error:', error);
+      return { success: false, reportLink: null };
+    } finally {
+      // Restore action section visibility
+      if (actionSection) actionSection.style.display = 'block';
     }
   };
 
@@ -195,36 +233,41 @@ export function LeadCaptureModal({
     if (!validateForm()) return;
 
     setIsSubmitting(true);
-    const payload = buildPayload();
 
     try {
-      const response = await fetch(WEBHOOK_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
+      // 1. Generate PDF and trigger instant download + background upload
+      const { reportLink } = await generatePdfAndUpload();
+
+      // Show immediate feedback
+      toast({
+        title: "Your PDF is downloading!",
+        description: "We'll email the report shortly.",
       });
 
-      if (response.ok) {
-        toast({
-          title: "Success!",
-          description: "We have mailed you your Client ROI report and Meeting invite, kindly check!",
+      // 2. Build payload with report link
+      const payload = buildPayload(reportLink);
+
+      // 3. Send webhook in background (non-blocking for user experience)
+      try {
+        await fetch(WEBHOOK_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
         });
+      } catch (webhookError) {
+        console.error('Webhook error:', webhookError);
+        // Non-blocking - user already has their PDF
+      }
 
-        if (mode === 'pdf') {
-          await downloadPDF();
-        }
+      onSuccess();
+      onClose();
+      resetForm();
 
-        onSuccess();
-        onClose();
-        resetForm();
-
-        if (mode === 'booking') {
-          window.open(BOOKING_URL, '_blank', 'noopener,noreferrer');
-        }
-      } else {
-        throw new Error('Webhook failed');
+      // 4. For booking mode, always open calendar
+      if (mode === 'booking') {
+        window.open(BOOKING_URL, '_blank', 'noopener,noreferrer');
       }
     } catch (error) {
       console.error('Submission error:', error);
@@ -235,11 +278,7 @@ export function LeadCaptureModal({
         variant: "destructive",
       });
 
-      // Still allow the user to proceed
-      if (mode === 'pdf') {
-        await downloadPDF();
-      }
-      
+      // Always allow booking redirect even on error
       if (mode === 'booking') {
         window.open(BOOKING_URL, '_blank', 'noopener,noreferrer');
       }

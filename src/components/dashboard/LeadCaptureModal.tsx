@@ -88,27 +88,15 @@ export function LeadCaptureModal({
     return isValid;
   };
 
-  const generateReportHTML = (): string => {
-    const element = document.getElementById('calculator-content');
-    if (!element) return '';
-    
-    const clone = element.cloneNode(true) as HTMLElement;
-    const takeActionSection = clone.querySelector('[data-section="take-action"]');
-    if (takeActionSection) {
-      takeActionSection.remove();
-    }
-    
-    return clone.outerHTML;
-  };
 
   const buildPayload = (reportLink: string | null) => {
     return {
+      action: mode === 'pdf' ? 'download_report' : 'book_call',
       timestamp: new Date().toISOString(),
       name: formData.name.trim(),
       email: formData.email.trim(),
       company: formData.company.trim() || null,
       report_link: reportLink || 'Upload Failed',
-      report_html: generateReportHTML(),
       currency: currency,
       business_model: selectedClientType ? businessModelLabels[selectedClientType] : null,
       aacv: inputs.aacv,
@@ -140,7 +128,6 @@ export function LeadCaptureModal({
       cost_per_sql: outputs.costPerSQL,
       net_revenue_after_investment: outputs.netRevenue,
       roi_ratio: parseFloat(outputs.roiRatio) || 0,
-      action_type: mode,
     };
   };
 
@@ -162,7 +149,7 @@ export function LeadCaptureModal({
       const totalHeight = element.scrollHeight + 50;
       const totalWidth = element.offsetWidth;
 
-      const filename = `YAK_Report_${formData.name.trim().replace(/\s+/g, '-')}.pdf`;
+      const filename = 'YAK AI-SDR Lead Gen - Client ROI Calculator.pdf';
 
       const opt = {
         margin: 0,
@@ -235,23 +222,26 @@ export function LeadCaptureModal({
     setIsSubmitting(true);
 
     let webhookSuccess = false;
+    let reportLink: string | null = null;
 
     try {
-      // 1. Generate PDF and trigger instant download + background upload
-      const { success: pdfSuccess, reportLink } = await generatePdfAndUpload();
+      // For PDF mode: Generate PDF and trigger instant download + background upload
+      if (mode === 'pdf') {
+        const { success: pdfSuccess, reportLink: link } = await generatePdfAndUpload();
+        reportLink = link;
 
-      if (pdfSuccess) {
-        // Show immediate feedback for PDF download
-        toast({
-          title: "Your PDF is downloading!",
-          description: "We'll email the report shortly.",
-        });
+        if (pdfSuccess) {
+          toast({
+            title: "Your PDF is downloading!",
+            description: "We'll email the report shortly.",
+          });
+        }
       }
 
-      // 2. Build payload with report link
+      // Build payload with report link (or null for booking)
       const payload = buildPayload(reportLink);
 
-      // 3. Send webhook
+      // Send webhook for both modes
       try {
         const response = await fetch(WEBHOOK_URL, {
           method: 'POST',
@@ -275,7 +265,9 @@ export function LeadCaptureModal({
         webhookSuccess = false;
         toast({
           title: "We couldn't save your details",
-          description: "Don't worry! Your PDF has been downloaded. You can still book a call.",
+          description: mode === 'pdf' 
+            ? "Don't worry! Your PDF has been downloaded."
+            : "Don't worry! You can still book a call.",
           variant: "destructive",
         });
       }
@@ -284,7 +276,7 @@ export function LeadCaptureModal({
       onClose();
       resetForm();
 
-      // 4. For booking mode, only redirect on webhook ERROR
+      // For booking mode, only redirect on webhook ERROR
       if (mode === 'booking' && !webhookSuccess) {
         window.open(BOOKING_URL, '_blank', 'noopener,noreferrer');
       }

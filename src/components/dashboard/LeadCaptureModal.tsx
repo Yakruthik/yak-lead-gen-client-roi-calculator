@@ -158,6 +158,7 @@ export function LeadCaptureModal({
         html2canvas: {
           scale: 2,
           useCORS: true,
+          allowTaint: true,
           logging: false,
           backgroundColor: '#0f172a',
         },
@@ -168,18 +169,25 @@ export function LeadCaptureModal({
         },
       };
 
-      const worker = html2pdf().set(opt).from(element);
+      // Generate PDF blob first for upload
+      const pdfBlob = await html2pdf().set(opt).from(element).output('blob');
       
-      // 1. Trigger instant download only if requested
+      // Trigger download if requested
       if (triggerDownload) {
-        worker.save();
+        const downloadUrl = URL.createObjectURL(pdfBlob);
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(downloadUrl);
       }
 
-      // 2. Background upload to tmpfiles.org
+      // Background upload to tmpfiles.org
       let reportLink: string | null = null;
       
       try {
-        const pdfBlob = await worker.output('blob');
         const uploadData = new FormData();
         uploadData.append('file', pdfBlob, filename);
 

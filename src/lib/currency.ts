@@ -1,14 +1,46 @@
-// Exchange rates (Jan 2026) - Updated constants
-// USD to INR: 92, USD to AED: 3.6725
-export const rates = {
+// Exchange rates - will be updated with real-time data
+export const defaultRates = {
   INR: { symbol: '₹', toUSD: 1/92, toAED: 3.6725/92 },
   USD: { symbol: '$', toINR: 92, toAED: 3.6725 },
   AED: { symbol: 'د.إ', toINR: 92/3.6725, toUSD: 1/3.6725 }
 };
 
+// Store for live rates
+let liveRates: typeof defaultRates | null = null;
+
 export type Currency = 'INR' | 'USD' | 'AED';
 
+// Fetch real-time rates from ExchangeRate-API (free tier: 1,500 requests/month)
+export async function fetchLiveRates(): Promise<boolean> {
+  try {
+    const response = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
+    if (!response.ok) throw new Error('Failed to fetch rates');
+    
+    const data = await response.json();
+    const usdToInr = data.rates.INR;
+    const usdToAed = data.rates.AED;
+    
+    liveRates = {
+      INR: { symbol: '₹', toUSD: 1/usdToInr, toAED: usdToAed/usdToInr },
+      USD: { symbol: '$', toINR: usdToInr, toAED: usdToAed },
+      AED: { symbol: 'د.إ', toINR: usdToInr/usdToAed, toUSD: 1/usdToAed }
+    };
+    
+    console.log('Live rates fetched:', { usdToInr, usdToAed });
+    return true;
+  } catch (error) {
+    console.error('Failed to fetch live rates, using defaults:', error);
+    return false;
+  }
+}
+
+// Get current rates (live or default)
+export function getRates() {
+  return liveRates || defaultRates;
+}
+
 export function convertCurrency(amount: number, fromCur: Currency, toCur: Currency): number {
+  const rates = getRates();
   if (fromCur === toCur) return amount;
   if (fromCur === 'INR' && toCur === 'USD') return amount * rates.INR.toUSD;
   if (fromCur === 'INR' && toCur === 'AED') return amount * rates.INR.toAED;
@@ -22,6 +54,7 @@ export function convertCurrency(amount: number, fromCur: Currency, toCur: Curren
 export function formatCurrency(amount: number, currency: Currency): string {
   if (!amount || isNaN(amount) || !isFinite(amount)) return '—';
   const abs = Math.abs(amount);
+  const rates = getRates();
   const symbol = rates[currency].symbol;
   
   if (currency === 'INR') {

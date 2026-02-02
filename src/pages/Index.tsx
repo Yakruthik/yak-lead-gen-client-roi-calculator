@@ -1,11 +1,17 @@
+import { useEffect } from 'react';
 import { useCalculator } from '@/hooks/useCalculator';
 import { Header } from '@/components/dashboard/Header';
 import { Section1 } from '@/components/dashboard/Section1';
 import { Section2 } from '@/components/dashboard/Section2';
 import { Section3 } from '@/components/dashboard/Section3';
 import { Section4 } from '@/components/dashboard/Section4';
+import { fetchLiveRates } from '@/lib/currency';
 
 const Index = () => {
+  // Fetch live exchange rates on mount
+  useEffect(() => {
+    fetchLiveRates();
+  }, []);
   const {
     inputs,
     outputs,

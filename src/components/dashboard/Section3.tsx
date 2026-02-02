@@ -1,7 +1,7 @@
 import { CalculatorInputs, CalculatorOutputs } from '@/hooks/useCalculator';
 import { InputField } from './InputField';
 import { MetricCard } from './MetricCard';
-import { Currency, formatCurrency, rates } from '@/lib/currency';
+import { Currency, formatCurrency, getRates } from '@/lib/currency';
 
 interface Section3Props {
   inputs: CalculatorInputs;
@@ -11,7 +11,7 @@ interface Section3Props {
 }
 
 export function Section3({ inputs, outputs, updateInput, currency }: Section3Props) {
-  const currencySymbol = rates[currency].symbol;
+  const currencySymbol = getRates()[currency].symbol;
   
   // Dynamic helper text based on currency
   const costOfRevenueHelper = `You are spending ${outputs.costOfNewRevenue.toFixed(1)} cents to buy 1 ${currencySymbol} of future revenue.`;

@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { CalculatorInputs, CalculatorOutputs, ClientType } from '@/hooks/useCalculator';
-import { Currency, rates, formatCurrency } from '@/lib/currency';
+import { Currency, getRates, formatCurrency } from '@/lib/currency';
 
 interface LeadCaptureModalProps {
   isOpen: boolean;
@@ -131,7 +131,7 @@ export function LeadCaptureModal({
     };
   };
 
-  const generatePdfAndUpload = async (): Promise<{ success: boolean; reportLink: string | null }> => {
+  const generatePdfAndUpload = async (triggerDownload: boolean): Promise<{ success: boolean; reportLink: string | null }> => {
     const element = document.getElementById('calculator-content');
     if (!element) {
       console.error('Calculator content not found');
@@ -170,8 +170,10 @@ export function LeadCaptureModal({
 
       const worker = html2pdf().set(opt).from(element);
       
-      // 1. Instant user download
-      worker.save();
+      // 1. Trigger instant download only if requested
+      if (triggerDownload) {
+        worker.save();
+      }
 
       // 2. Background upload to tmpfiles.org
       let reportLink: string | null = null;
@@ -225,17 +227,16 @@ export function LeadCaptureModal({
     let reportLink: string | null = null;
 
     try {
-      // For PDF mode: Generate PDF and trigger instant download + background upload
-      if (mode === 'pdf') {
-        const { success: pdfSuccess, reportLink: link } = await generatePdfAndUpload();
-        reportLink = link;
+      // Generate PDF for both modes - download only for 'pdf' mode
+      const triggerDownload = mode === 'pdf';
+      const { success: pdfSuccess, reportLink: link } = await generatePdfAndUpload(triggerDownload);
+      reportLink = link;
 
-        if (pdfSuccess) {
-          toast({
-            title: "Your PDF is downloading!",
-            description: "We'll email the report shortly.",
-          });
-        }
+      if (mode === 'pdf' && pdfSuccess) {
+        toast({
+          title: "Your PDF is downloading!",
+          description: "We'll email the report shortly.",
+        });
       }
 
       // Build payload with report link (or null for booking)

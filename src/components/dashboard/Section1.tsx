@@ -61,61 +61,73 @@ export function Section1({ inputs, updateInput, currency, selectedClientType, se
       </div>
 
       {/* Contract Value & Lifetime */}
-      <h3 className="text-secondary font-semibold text-lg mt-6 mb-4">💰 Contract Value & Lifetime (Choose One Approach)</h3>
-      <Tabs defaultValue="aacv" className="mb-5">
-        <TabsList className="grid w-full grid-cols-2 mb-4">
-          <TabsTrigger value="aacv">Annual Value + Lifespan</TabsTrigger>
-          <TabsTrigger value="tcv">Total Deal + Term</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="aacv">
-          <div className="grid md:grid-cols-2 gap-4">
-            <InputField
-              label="Annual Avg Contract Value (AACV)"
-              question="What's the typical annual revenue you get from one client?"
-              value={inputs.aacv}
-              onChange={(v) => updateInput('aacv', v)}
-              placeholder="e.g., 5000000"
-              required
-              currency={currency}
-              showCurrencyTrio
-            />
-            <InputField
-              label="Client Lifetime (Years)"
-              question="How long does a typical client stay with you?"
-              value={inputs.customerLifetime}
-              onChange={(v) => updateInput('customerLifetime', v)}
-              placeholder="e.g., 3"
-              step="0.5"
-              required
-            />
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="tcv">
-          <div className="grid md:grid-cols-2 gap-4">
-            <InputField
-              label="Total Contract Value (TCV)"
-              question="What's the total value of a typical contract over its full duration?"
-              value={inputs.tcv}
-              onChange={(v) => updateInput('tcv', v)}
-              placeholder="e.g., 15000000"
-              required
-              currency={currency}
-              showCurrencyTrio
-            />
-            <InputField
-              label="Contract Duration (Years)"
-              question="How long is the typical contract term?"
-              value={inputs.contractDuration}
-              onChange={(v) => updateInput('contractDuration', v)}
-              placeholder="e.g., 3"
-              step="0.5"
-              required
-            />
-          </div>
-        </TabsContent>
-      </Tabs>
+      <div className="bg-card border border-border rounded-lg p-5 mb-6">
+        <h3 className="text-secondary font-semibold text-lg mb-4">💰 Contract Value & Lifetime (Choose One Approach)</h3>
+        <Tabs defaultValue="aacv">
+          <TabsList className="mb-4 bg-transparent p-0 gap-2">
+            <TabsTrigger 
+              value="aacv" 
+              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground bg-transparent border border-primary text-primary px-4 py-2 rounded-md"
+            >
+              Annual Avg Value
+            </TabsTrigger>
+            <TabsTrigger 
+              value="tcv"
+              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground bg-transparent border border-primary text-primary px-4 py-2 rounded-md"
+            >
+              Total Deal + Term
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="aacv">
+            <div className="grid md:grid-cols-2 gap-4">
+              <InputField
+                label="Annual Average Contract Value (AACV)"
+                question="What's the typical annual revenue you get from one client?"
+                value={inputs.aacv}
+                onChange={(v) => updateInput('aacv', v)}
+                placeholder="e.g., 5000000"
+                required
+                currency={currency}
+                showCurrencyTrio
+              />
+              <InputField
+                label="Client Lifetime (Years)"
+                question="How long does a typical client stay with you?"
+                value={inputs.customerLifetime}
+                onChange={(v) => updateInput('customerLifetime', v)}
+                placeholder="e.g., 3"
+                step="0.5"
+                required
+              />
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="tcv">
+            <div className="grid md:grid-cols-2 gap-4">
+              <InputField
+                label="Total Contract Value (TCV)"
+                question="What's the total value of a typical contract over its full duration?"
+                value={inputs.tcv}
+                onChange={(v) => updateInput('tcv', v)}
+                placeholder="e.g., 15000000"
+                required
+                currency={currency}
+                showCurrencyTrio
+              />
+              <InputField
+                label="Contract Duration (Years)"
+                question="How long is the typical contract term?"
+                value={inputs.contractDuration}
+                onChange={(v) => updateInput('contractDuration', v)}
+                placeholder="e.g., 3"
+                step="0.5"
+                required
+              />
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
 
       {/* Growth & Pipeline */}
       <h3 className="text-secondary font-semibold text-lg mt-6 mb-4">🎯 Growth & Pipeline</h3>

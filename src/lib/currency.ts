@@ -5,8 +5,9 @@ export const defaultRates = {
   AED: { symbol: 'د.إ', toINR: 92/3.6725, toUSD: 1/3.6725 }
 };
 
-// Store for live rates
+// Store for live rates and metadata
 let liveRates: typeof defaultRates | null = null;
+let ratesMetadata: { usdToInr: number; usdToAed: number; fetchedAt: Date } | null = null;
 
 export type Currency = 'INR' | 'USD' | 'AED';
 
@@ -26,6 +27,12 @@ export async function fetchLiveRates(): Promise<boolean> {
       AED: { symbol: 'د.إ', toINR: usdToInr/usdToAed, toUSD: 1/usdToAed }
     };
     
+    ratesMetadata = {
+      usdToInr,
+      usdToAed,
+      fetchedAt: new Date()
+    };
+    
     console.log('Live rates fetched:', { usdToInr, usdToAed });
     return true;
   } catch (error) {
@@ -37,6 +44,16 @@ export async function fetchLiveRates(): Promise<boolean> {
 // Get current rates (live or default)
 export function getRates() {
   return liveRates || defaultRates;
+}
+
+// Get rates metadata for display
+export function getRatesMetadata() {
+  return ratesMetadata;
+}
+
+// Check if using live rates
+export function isUsingLiveRates() {
+  return liveRates !== null;
 }
 
 export function convertCurrency(amount: number, fromCur: Currency, toCur: Currency): number {
